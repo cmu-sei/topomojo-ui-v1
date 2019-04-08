@@ -4,7 +4,7 @@ import { RouterModule } from '@angular/router';
 
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {  PageNotFoundComponent } from './ui/core/page-not-found/page-not-found.component';
+import { PageNotFoundComponent } from './ui/core/page-not-found/page-not-found.component';
 import { WelcomeComponent } from './ui/core/welcome/welcome.component';
 import { ApiModule } from './api/gen/api.module';
 import { SvcModule } from './svc/svc.module';

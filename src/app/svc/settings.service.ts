@@ -1,8 +1,7 @@
 import { Injectable, InjectionToken } from '@angular/core';
 import { Observable, Subject, of ,  throwError as observableThrowError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
-import { UserManagerSettings } from 'oidc-client';
+import { UserManagerSettings } from 'oidc-jam';
 import { catchError } from 'rxjs/operators';
 import { ShowdownOptions } from 'showdown';
 
@@ -144,16 +143,6 @@ export function getShowdownOpts() {
         smoothLivePreview: true,
         tasklists: true
     };
-}
-
-export function createTranslateLoader(http: HttpClient, baseHref) {
-    // Temporary Azure hack
-    if (baseHref === 'undefined' && typeof window !== 'undefined') {
-        baseHref = window.location.origin;
-    }
-
-    // i18n files are in `wwwroot/lang/`
-    return new TranslateHttpLoader(http, `/assets/lang/`, '.json');
 }
 
 export interface Settings {

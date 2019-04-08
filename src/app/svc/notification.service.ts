@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder } from '@aspnet/signalr';
+import { HubConnection, HubConnectionBuilder, LogLevel } from '@aspnet/signalr';
 import { AuthService, AuthTokenState } from './auth.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { SettingsService } from './settings.service';
@@ -23,7 +23,7 @@ export class NotificationService {
     }
     private profile: Profile;
     private key: string;
-    private debug = true;
+    private debug = false;
     private connected = false;
     private connection: HubConnection;
 
@@ -86,7 +86,10 @@ export class NotificationService {
     start(key: string): Promise<boolean> {
         this.key = key;
         this.connection = new HubConnectionBuilder()
-            .withUrl(`${this.settingSvc.settings.urls.apiUrl}/hub?bearer=${this.authSvc.access_token()}`).build();
+            .withUrl(`${this.settingSvc.settings.urls.apiUrl}/hub`, { accessTokenFactory: () => this.authSvc.access_token() })
+            .configureLogging(LogLevel.Warning)
+            .build();
+
         this.log('starting sigr');
         return this.connection.start()
             .catch(err => { console.error(err); })

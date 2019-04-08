@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { UserManager, User, WebStorageStateStore, Log } from 'oidc-client';
+import { UserManager, User, WebStorageStateStore, Log } from 'oidc-jam';
 import { BehaviorSubject } from 'rxjs';
 import { SettingsService } from './settings.service';
 
