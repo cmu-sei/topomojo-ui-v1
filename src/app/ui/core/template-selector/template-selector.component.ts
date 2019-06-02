@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Component, OnInit, ViewChild, AfterViewInit, ElementRef, EventEmitter, Output, Input } from '@angular/core';
 import { DataSource, CollectionViewer } from '@angular/cdk/collections';
 import { TemplateSummary, TemplateSummarySearchResult, Search } from '../../../api/gen/models';

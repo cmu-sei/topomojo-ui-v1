@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, Input } from '@angular/core';
 import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
 import { Observable, Subject } from 'rxjs';

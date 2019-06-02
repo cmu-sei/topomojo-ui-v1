@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { TopologyService } from '../../../api/topology.service';
@@ -43,8 +45,7 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
           p =>  {
             this.hasProfile = p;
             if (p) { this.initToolbar(); }
-            if (!p) { this.showLoginMsg = true; }
-
+            this.showLoginMsg = !p;
             this.model.sort = this.settingsSvc.localSettings.lobbySort || 'age';
             const f = !!this.settingsSvc.localSettings.lobbyFilter
               ? this.settingsSvc.localSettings.lobbyFilter

@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd, RouterEvent } from '@angular/router';
 import { AuthService, AuthTokenState } from './svc/auth.service';

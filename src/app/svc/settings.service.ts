@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Injectable, InjectionToken } from '@angular/core';
 import { Observable, Subject, of ,  throwError as observableThrowError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';

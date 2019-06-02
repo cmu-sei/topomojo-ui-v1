@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, OnChanges } from '@angular/core';
 import { SettingsService } from '../../../svc/settings.service';
 import { Converter } from 'showdown';

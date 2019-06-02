@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { GamespaceService } from '../../../api/gamespace.service';
 import { Gamespace } from '../../../api/gen/models';

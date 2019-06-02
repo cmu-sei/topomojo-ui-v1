@@ -1,3 +1,5 @@
+// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Injectable } from '@angular/core';
 import { AuthService, AuthTokenState } from './auth.service';
 import { ProfileService } from '../api/profile.service';
