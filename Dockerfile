@@ -6,7 +6,7 @@ ARG commit
 WORKDIR /app
 COPY package.json package-lock.json tools/ ./
 RUN npm install && \
-    node tools/fixup-wmks.js
+    node fixup-wmks.js
 COPY . .
 RUN $(npm bin)/ng build --prod --output-path /app/dist && \
     sed -i s/##COMMIT##/"$commit"/ /app/dist/assets/config/settings.json
@@ -17,6 +17,6 @@ CMD ["npm", "start"]
 #
 FROM nginx:alpine
 WORKDIR /var/www
-COPY --from=dev /app/tools/nginx-static.conf /etc/nginx/conf.d/default.conf
+COPY --from=dev /app/nginx-static.conf /etc/nginx/conf.d/default.conf
 COPY --from=dev /app/dist .
 EXPOSE 80
