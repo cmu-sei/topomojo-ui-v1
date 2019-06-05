@@ -1,7 +1,7 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
 import { Injectable } from '@angular/core';
-import { UserManager, User, WebStorageStateStore, Log } from 'oidc-jam';
+import { UserManager, User, WebStorageStateStore, Log } from 'oidc-client';
 import { BehaviorSubject } from 'rxjs';
 import { SettingsService } from './settings.service';
 

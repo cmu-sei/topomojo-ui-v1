@@ -3,7 +3,7 @@
 import { Injectable, InjectionToken } from '@angular/core';
 import { Observable, Subject, of ,  throwError as observableThrowError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { UserManagerSettings } from 'oidc-jam';
+import { UserManagerSettings } from 'oidc-client';
 import { catchError } from 'rxjs/operators';
 import { ShowdownOptions } from 'showdown';
 
