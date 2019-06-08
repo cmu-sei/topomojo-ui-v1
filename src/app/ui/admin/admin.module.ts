@@ -1,5 +1,5 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
-// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminComponent } from './admin.component';
@@ -55,6 +55,17 @@ import { DashboardComponent } from './dashboard/dashboard.component';
       ]}
     ])
   ],
-  declarations: [AdminComponent, WorkspacesComponent, GamespacesComponent, TemplatesComponent, MachinesComponent, PeopleComponent, TemplateDetailFormComponent, ProfileSettingsComponent, TemplateCreatorComponent, DashboardComponent]
+  declarations: [
+    AdminComponent,
+    WorkspacesComponent,
+    GamespacesComponent,
+    TemplatesComponent,
+    MachinesComponent,
+    PeopleComponent,
+    TemplateDetailFormComponent,
+    ProfileSettingsComponent,
+    TemplateCreatorComponent,
+    DashboardComponent
+  ]
 })
 export class AdminModule { }

@@ -1,7 +1,7 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
-// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { NgModule, APP_INITIALIZER } from '@angular/core';
-import { HTTP_INTERCEPTORS } from '@angular/common/http'
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { AuthService } from './auth.service';
 import { AuthInterceptor } from './http-auth-interceptor';
 import { AuthGuard } from './auth-guard.service';

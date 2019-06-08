@@ -1,9 +1,16 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
-// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Injectable } from '@angular/core';
 import { UserManager, User, WebStorageStateStore, Log } from 'oidc-client';
 import { BehaviorSubject } from 'rxjs';
 import { SettingsService } from './settings.service';
+
+export enum AuthTokenState {
+    valid = <any>'valid',
+    invalid = <any>'invalid',
+    expiring = <any>'expiring',
+    expired = <any>'expired'
+}
 
 @Injectable()
 export class AuthService {
@@ -138,11 +145,4 @@ export class AuthService {
             .replace(/[?&]contentId=[^&]*/, '')
             .replace(/[?&]profileId=[^&]*/, '');
     }
-}
-
-export enum AuthTokenState {
-    valid = <any>'valid',
-    invalid = <any>'invalid',
-    expiring = <any>'expiring',
-    expired = <any>'expired'
 }

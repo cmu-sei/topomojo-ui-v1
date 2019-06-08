@@ -1,5 +1,5 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
-// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { Template, Vm, Topology } from '../../../api/gen/models';
 import { TemplateService } from '../../../api/template.service';
@@ -68,7 +68,7 @@ export class TemplateComponent implements OnInit {
 
     let q: Observable<any> = this.templateSvc.deleteTemplate(this.template.id);
     if (!!this.vm.id) {
-      q = forkJoin(q, this.vmSvc.deleteVm(this.vm.id).pipe(mapTo(true)));
+      q = forkJoin([q, this.vmSvc.deleteVm(this.vm.id).pipe(mapTo(true))]);
     }
     q.subscribe(() => this.deleted.emit(this.template));
   }

@@ -1,11 +1,15 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
-// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Injectable, InjectionToken } from '@angular/core';
 import { Observable, Subject, of ,  throwError as observableThrowError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { UserManagerSettings } from 'oidc-client';
 import { catchError } from 'rxjs/operators';
 import { ShowdownOptions } from 'showdown';
+
+export class Layout {
+    embedded: boolean;
+}
 
 @Injectable()
 export class SettingsService {
@@ -125,10 +129,6 @@ export class SettingsService {
         } catch (e) { }
     }
 
-}
-
-export class Layout {
-    embedded: boolean;
 }
 
 export const ORIGIN_URL = new InjectionToken<string>('ORIGIN_URL');

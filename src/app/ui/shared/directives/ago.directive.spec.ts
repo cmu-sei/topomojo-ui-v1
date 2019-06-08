@@ -1,10 +1,11 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
-// Licensed under the MIT (SEI) License. See LICENSE.md in the project root for license information.
-import { AgoDirective } from './ago.directive';
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
-describe('AgoDirective', () => {
+import { AgedDatePipe } from './ago.directive';
+
+describe('AgedDatePipe', () => {
   it('should create an instance', () => {
-    const directive = new AgoDirective();
+    const directive = new AgedDatePipe();
     expect(directive).toBeTruthy();
   });
 });
