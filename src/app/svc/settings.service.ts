@@ -156,6 +156,7 @@ export interface Settings {
     maintMessage?: string;
     showdown?: ShowdownOptions;
     local?: LocalAppSettings;
+    useSessionStorage?: boolean;
 }
 
 export interface AppUrlSettings {

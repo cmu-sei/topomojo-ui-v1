@@ -27,6 +27,9 @@ export class AuthService {
         // Log.level = Log.DEBUG;
         // Log.logger = console;
         this.authority = this.settingsSvc.settings.oidc.authority.replace(/https?:\/\//, '');
+        if (!this.settingsSvc.settings.useSessionStorage) {
+            (<any>this.settingsSvc.settings.oidc.userStore) = new WebStorageStateStore({});
+        }
         this.mgr = new UserManager(this.settingsSvc.settings.oidc);
         this.mgr.events.addUserLoaded(user => { this.onTokenLoaded(user); });
         this.mgr.events.addUserUnloaded(user => { this.onTokenUnloaded(user); });
