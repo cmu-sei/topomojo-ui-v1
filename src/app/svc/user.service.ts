@@ -29,7 +29,7 @@ export class UserService {
             case AuthTokenState.valid:
                 this.getProfile(false).subscribe(
                     (p: Profile) => {
-                        this.profile = p;
+                        this.profile = !!p ? p : {};
                         this.profile$.next(this.profile);
                     }
                 );

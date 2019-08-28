@@ -32,7 +32,7 @@ export class AuthService {
         }
         this.mgr = new UserManager(this.settingsSvc.settings.oidc);
         this.mgr.events.addUserLoaded(user => { this.onTokenLoaded(user); });
-        this.mgr.events.addUserUnloaded(user => { this.onTokenUnloaded(user); });
+        this.mgr.events.addUserUnloaded(() => { this.onTokenUnloaded(); });
         this.mgr.events.addAccessTokenExpiring(e => { this.onTokenExpiring(); });
         this.mgr.events.addAccessTokenExpired(e => { this.onTokenExpired(); });
         this.mgr.getUser().then((user) => {
@@ -81,8 +81,8 @@ export class AuthService {
         );
     }
 
-    private onTokenUnloaded(user) {
-        this.oidcUser = user;
+    private onTokenUnloaded() {
+        this.oidcUser = null;
         this.tokenState$.next(AuthTokenState.invalid);
     }
 
