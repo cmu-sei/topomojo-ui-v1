@@ -46,6 +46,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   private hotspot = { x: 0, y: 0, w: 20, h: 20 };
   isoSource: IsoDataSource;
   netSource: VmNetDataSource;
+  feedback = '';
+  feedbackState = '';
 
   constructor(
     private injector: Injector,
@@ -177,11 +179,34 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isoSelected(iso: IsoFile) {
-    this.vmSvc.postVmChange(this.info.id, { key: 'iso', value: iso.path }).subscribe();
+    this.reconfigureFeedback('pending');
+    this.vmSvc.postVmChange(this.info.id, { key: 'iso', value: iso.path })
+    .subscribe(
+      () => {
+        this.reconfigureFeedback('success');
+      },
+      () => this.reconfigureFeedback('fail')
+    );
   }
 
   netSelected(net: IsoFile) {
-    this.vmSvc.postVmChange(this.info.id, { key: 'net', value: net.path }).subscribe();
+    this.reconfigureFeedback('pending');
+    this.vmSvc.postVmChange(this.info.id, { key: 'net', value: net.path })
+    .subscribe(
+      () => {
+        this.reconfigureFeedback('success');
+      },
+      () => this.reconfigureFeedback('fail')
+    );
+
+  }
+
+  reconfigureFeedback(msg: string) {
+    this.feedbackState = msg;
+    this.feedback = `Configuration: ${msg}.`;
+    if (msg !== 'pending') {
+      timer(3000).subscribe(() => { console.log('timer'); this.feedback = ''; });
+    }
   }
 
   shadowState(state: string): void {

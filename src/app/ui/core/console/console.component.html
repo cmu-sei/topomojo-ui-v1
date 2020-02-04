@@ -66,6 +66,7 @@
             <mat-expansion-panel-header>
               <mat-panel-title>Change Network</mat-panel-title>
             </mat-expansion-panel-header>
+            <div *ngIf="feedback" [class]="feedbackState">{{ feedback | uppercase }}</div>
             <topomojo-select-table *ngIf="netSource" [dataSource]="netSource" (selected)="netSelected($event)"></topomojo-select-table>
           </mat-expansion-panel>
 
@@ -76,6 +77,7 @@
             <small>If changing ISO on a linux machine, be sure to eject any currently mounted cdrom device.
               If you don't you may need to answer a vm-question to recover an unreponsive machine.
             </small>
+            <div *ngIf="feedback" [class]="feedbackState">{{ feedback | uppercase }}</div>
             <topomojo-select-table *ngIf="isoSource" [dataSource]="isoSource" (selected)="isoSelected($event)"></topomojo-select-table>
           </mat-expansion-panel>
 

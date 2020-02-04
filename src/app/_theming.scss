@@ -6,6 +6,7 @@
 @import './ui/core/welcome/theming';
 @import './ui/shared/error-div/theming';
 @import './ui/core/chat-panel/theming';
+@import './ui/core/console/theming';
 // @import './styles/api-theme';
 // @import './styles/markdown-theme';
 // @import './styles/svg-theme';
@@ -23,4 +24,5 @@
   @include mix-welcome-theme($theme);
   @include mix-errormsg-theme($theme);
   @include mix-chatpanel-theme($theme);
+  @include mix-console-theme($theme);
 }
