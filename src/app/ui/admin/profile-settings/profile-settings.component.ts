@@ -13,7 +13,7 @@ import { Profile } from '../../../api/gen/models';
 export class ProfileSettingsComponent implements OnInit {
   @Input() profile: Profile;
   @Output() deleted = new EventEmitter<Profile>();
-  @ViewChild(NgForm) form;
+  @ViewChild(NgForm, {static: false}) form;
 
   constructor(
     private profileSvc: ProfileService

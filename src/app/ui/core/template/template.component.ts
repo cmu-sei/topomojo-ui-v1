@@ -1,7 +1,7 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild } from '@angular/core';
-import { Template, Vm, Topology } from '../../../api/gen/models';
+import { Template, Vm, Workspace } from '../../../api/gen/models';
 import { TemplateService } from '../../../api/template.service';
 import { VmService } from '../../../api/vm.service';
 import { forkJoin, Observable } from 'rxjs';
@@ -23,7 +23,7 @@ export class TemplateComponent implements OnInit {
   @Output() cloned = new EventEmitter<Template>();
   vm: Vm = {};
   private isoSource: IsoDataSource;
-  @ViewChild(VmControllerComponent) vmcontroller: VmControllerComponent;
+  @ViewChild(VmControllerComponent, {static: false}) vmcontroller: VmControllerComponent;
 
   constructor(
     private templateSvc: TemplateService,

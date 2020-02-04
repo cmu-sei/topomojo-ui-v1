@@ -12,7 +12,7 @@ import { TemplateService } from '../../../api/template.service';
 })
 export class TemplateDetailFormComponent implements OnInit {
   @Input() template: TemplateDetail;
-  @ViewChild(NgForm) form: NgForm;
+  @ViewChild(NgForm, {static: false}) form: NgForm;
   errors: Array<Error> = [];
 
   constructor(

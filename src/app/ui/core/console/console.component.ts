@@ -1,15 +1,14 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import {
-  Component, OnInit, ViewChild, ViewRef, AfterViewInit,
+  Component, OnInit, ViewChild, AfterViewInit,
   ElementRef, Input, Injector, HostListener, OnDestroy
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { VmService } from '../../../api/vm.service';
-import { FileService } from '../../../api/file.service';
-import { DisplayInfo, VmOperationTypeEnum } from '../../../api/gen/models';
+import { ConsoleSummary, VmOperationTypeEnum } from '../../../api/gen/models';
 import { catchError, debounceTime, map, distinctUntilChanged } from 'rxjs/operators';
-import { throwError as ObservableThrower, of, fromEvent, Observable, Subscription } from 'rxjs';
+import { throwError as ObservableThrower, fromEvent, Subscription, timer } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { MockConsoleService } from './services/mock-console.service';
 import { WmksConsoleService } from './services/wmks-console.service';
@@ -33,7 +32,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input() index = 0;
   @Input() id: string;
-  info: DisplayInfo = {};
+  info: ConsoleSummary = {};
   state = 'loading';
   shadowstate = 'loading';
   shadowTimer: any;
@@ -41,8 +40,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   stateButtonIcons: any = {};
   stateIcon = '';
   console: ConsoleService;
-  @ViewChild(MatDrawer) drawer: MatDrawer;
-  @ViewChild('consoleCanvas') consoleCanvas: ElementRef;
+  @ViewChild(MatDrawer, {static: false}) drawer: MatDrawer;
+  @ViewChild('consoleCanvas', {static: false}) consoleCanvas: ElementRef;
   subs: Array<Subscription> = [];
   private hotspot = { x: 0, y: 0, w: 20, h: 20 };
   isoSource: IsoDataSource;
@@ -132,10 +131,10 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
         })
         ))
       .subscribe(
-        (info: DisplayInfo) => {
-          if (info.topoId !== this.info.topoId) {
-            this.isoSource = new IsoDataSource(this.topologySvc, info.topoId);
-            this.netSource = new VmNetDataSource(this.topologySvc, info.topoId);
+        (info: ConsoleSummary) => {
+          if (info.workspaceId !== this.info.workspaceId) {
+            this.isoSource = new IsoDataSource(this.topologySvc, info.workspaceId);
+            this.netSource = new VmNetDataSource(this.topologySvc, info.workspaceId);
           }
           this.info = info;
           this.console = (this.isMock())
@@ -155,7 +154,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
             this.changeState('failed');
           }
         },
-        (err: Error) => {
+        () => {
           // show error
           this.changeState('failed');
         },
@@ -196,7 +195,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isMock(): boolean {
-    return this.info.conditions && this.info.conditions.match(/mock/) !== null;
+    return this.info.url && this.info.url.match(/mock/) !== null;
   }
 
   showMockConnected(): boolean {

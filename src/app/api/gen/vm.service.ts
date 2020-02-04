@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { ApiSettings } from '../api-settings';
 import { GeneratedService } from './_service';
 // tslint:disable-next-line:max-line-length
-import { DisplayInfo, KeyValuePair, Vm, VmAnswer, VmOperation, VmOperationTypeEnum, VmOptions, VmQuestion, VmStateEnum, VmTask } from './models';
+import { ConsoleSummary, KeyValuePair, Vm, VmAnswer, VmOperation, VmOperationTypeEnum, VmOptions, VmQuestion, VmStateEnum, VmTask } from './models';
 
 @Injectable()
 export class GeneratedVmService extends GeneratedService {
@@ -17,8 +17,8 @@ export class GeneratedVmService extends GeneratedService {
        protected api: ApiSettings
     ) { super(http, api); }
 
-    public getVmTicket(id: string): Observable<DisplayInfo> {
-        return this.http.get<DisplayInfo>(this.api.url + '/api/vm/' + id + '/ticket');
+    public getVmTicket(id: string): Observable<ConsoleSummary> {
+        return this.http.get<ConsoleSummary>(this.api.url + '/api/vm/' + id + '/ticket');
     }
     public getVms(tag: string): Observable<Array<Vm>> {
         return this.http.get<Array<Vm>>(this.api.url + '/api/vms' + this.paramify({tag: tag}));

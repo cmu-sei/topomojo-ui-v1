@@ -27,7 +27,7 @@ export class WorkspaceCreatorComponent implements OnInit {
 
   clicked(): void {
     if (!!this.name) {
-      this.workspaceSvc.postTopology({
+      this.workspaceSvc.postWorkspace({
         name: this.name,
         description: this.description
       }).subscribe(

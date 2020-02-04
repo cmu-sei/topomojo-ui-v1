@@ -1,7 +1,7 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, AfterViewInit, ViewChild, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
-import { Template, ChangedTemplate, Topology } from '../../../api/gen/models';
+import { Template, ChangedTemplate, Workspace } from '../../../api/gen/models';
 import { NgForm } from '@angular/forms';
 import { debounceTime } from 'rxjs/operators';
 import { TemplateService } from '../../../api/template.service';
@@ -17,7 +17,7 @@ export class TemplateSettingsComponent implements OnInit, AfterViewInit {
   @Input() template: Template;
   @Input() hasVm = false;
   // @Input() workspaceId: string;
-  @ViewChild(NgForm) form: NgForm;
+  @ViewChild(NgForm, {static: false}) form: NgForm;
   isoSource: IsoDataSource;
   isoDirty = false;
   showingIsos = false;

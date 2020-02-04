@@ -76,7 +76,7 @@
         <!-- <span>Generate New Url</span> -->
       </button>
 
-      <a href={{shareUrl()}} mat-icon-button matTooltip="Right-Click to Copy Link">
+      <a *ngIf="inviteUrl" href={{inviteUrl}} mat-icon-button matTooltip="Right-Click to Copy Link">
         <mat-icon>share</mat-icon>
         <!-- <span>Invitation Url</span> -->
       </a>

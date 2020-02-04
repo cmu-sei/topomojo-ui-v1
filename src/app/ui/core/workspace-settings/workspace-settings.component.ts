@@ -1,7 +1,7 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, ViewChild, AfterViewChecked, AfterViewInit, Output, EventEmitter } from '@angular/core';
-import { Topology, Profile, TopologyStateActionTypeEnum, ChangedTopology } from '../../../api/gen/models';
+import { Workspace, Profile, WorkspaceStateActionTypeEnum, ChangedWorkspace } from '../../../api/gen/models';
 import { MatChipEvent } from '@angular/material/chips';
 import { TopologyService } from '../../../api/topology.service';
 import { UserService } from '../../../svc/user.service';
@@ -16,11 +16,12 @@ import { debounceTime } from 'rxjs/operators';
 })
 export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
 
-  @Input() workspace: Topology;
+  @Input() workspace: Workspace;
   @Output() deleted = new EventEmitter<boolean>();
   profile: Profile = {};
   hostUrl = '';
-  @ViewChild('form') form: NgForm;
+  inviteUrl = '';
+  @ViewChild('form', {static: false}) form: NgForm;
 
   constructor(
     private service: TopologyService,
@@ -49,7 +50,7 @@ export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
 
   update() {
     if (this.form.valid) {
-      this.service.putTopology(this.form.value as ChangedTopology).subscribe(
+      this.service.putWorkspace(this.form.value as ChangedWorkspace).subscribe(
         (t) => {
           this.form.reset(this.form.value);
         }
@@ -60,9 +61,9 @@ export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
   }
   published(): void {
     const v = !this.workspace.isPublished;
-    this.service.postTopologyAction(this.workspace.id, {
+    this.service.postWorkspaceAction(this.workspace.id, {
         id: this.workspace.id,
-        type: v ? TopologyStateActionTypeEnum.publish : TopologyStateActionTypeEnum.unpublish
+        type: v ? WorkspaceStateActionTypeEnum.publish : WorkspaceStateActionTypeEnum.unpublish
     })
     .subscribe(
       () => { this.workspace.isPublished = v; }
@@ -87,13 +88,14 @@ export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
   }
 
   generateNewShareUrl() {
-    this.service.postTopologyAction(this.workspace.id, {
+    this.service.postWorkspaceAction(this.workspace.id, {
       id: this.workspace.id,
-      type: TopologyStateActionTypeEnum.share
+      type: WorkspaceStateActionTypeEnum.share
     })
       .subscribe(
         (data) => {
           this.workspace.shareCode = data.shareCode;
+          this.inviteUrl = this.shareUrl();
           // this.animateSuccess('share');
         },
         (err) => {

@@ -3,7 +3,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { TopologyService } from '../../../api/topology.service';
-import { Search, Topology, TopologySearchResult, Profile, TopologySummarySearchResult, TopologySummary } from '../../../api/gen/models';
+import { Search, Workspace, WorkspaceSearchResult, Profile, WorkspaceSummarySearchResult, WorkspaceSummary } from '../../../api/gen/models';
 import { UserService } from '../../../svc/user.service';
 import { SettingsService } from '../../../svc/settings.service';
 import { distinctUntilChanged, debounceTime, map, finalize, delay } from 'rxjs/operators';
@@ -21,7 +21,7 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
   showGames = false;
   showLoginMsg = false;
   fetching = false;
-  list: Array<TopologySummary> = new Array<TopologySummary>();
+  list: Array<WorkspaceSummary> = new Array<WorkspaceSummary>();
   model: Search = { sort: 'age', take: 25 };
   filter = '';
   private profile: Profile = {};
@@ -93,12 +93,12 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
     }
 
     this.fetching = true;
-    this.workspaceSvc.getTopologySummaries(this.model)
+    this.workspaceSvc.getWorkspaceSummaries(this.model)
     .pipe(
       finalize(() => this.fetching = false)
     )
     .subscribe(
-      (data: TopologySummarySearchResult) => {
+      (data: WorkspaceSummarySearchResult) => {
         if (this.model.skip > 0) {
           this.list.concat(data.results);
         } else {
@@ -139,7 +139,7 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
   //   return !!this.profile.id;
   // }
 
-  trackById(i: number, item: TopologySummary): number {
+  trackById(i: number, item: WorkspaceSummary): number {
     return item.id;
   }
 }

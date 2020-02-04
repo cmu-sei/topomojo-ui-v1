@@ -37,7 +37,7 @@ export class VmNetDataSource implements IDataSource<IsoFile> {
             return;
         }
 
-        this.svc.getTopologyNets(this.topoId).pipe(
+        this.svc.getWorkspaceNets(this.topoId).pipe(
         catchError(() => of([])),
         // finally(() => { })
         ).subscribe(
@@ -81,7 +81,7 @@ export class IsoDataSource implements IDataSource<IsoFile> {
             return;
         }
 
-        this.svc.getTopologyIsos(this.topoId).pipe(
+        this.svc.getWorkspaceIsos(this.topoId).pipe(
         catchError(() => of([])),
         // finally(() => { })
         ).subscribe(

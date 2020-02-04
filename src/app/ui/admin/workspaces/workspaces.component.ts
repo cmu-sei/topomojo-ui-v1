@@ -2,7 +2,7 @@
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { TopologyService } from '../../../api/topology.service';
-import { Topology, TopologySearchResult, Search } from '../../../api/gen/models';
+import { Workspace, WorkspaceSearchResult, Search } from '../../../api/gen/models';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -15,11 +15,11 @@ import { debounceTime } from 'rxjs/operators';
 export class WorkspacesComponent implements OnInit, OnDestroy {
 
   current = 0;
-  topos: Array<Topology> = [];
+  topos: Array<Workspace> = [];
   search: Search = {take: 26};
   hasMore = false;
   subs: Array<Subscription> = [];
-  changedTopo = new Subject<Topology>();
+  changedTopo = new Subject<Workspace>();
   changedTopo$ = this.changedTopo.asObservable();
   constructor(
     private topoSvc: TopologyService,
@@ -38,7 +38,7 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
       this.changedTopo$.pipe(
         debounceTime(500)
       ).subscribe((topo) => {
-        this.topoSvc.putTopologyPriv(topo).subscribe();
+        this.topoSvc.putWorkspacePriv(topo).subscribe();
       })
     );
     this.toolbar.search(true);
@@ -56,8 +56,8 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   }
 
   more() {
-    this.topoSvc.getTopologies(this.search).subscribe(
-      (data: TopologySearchResult) => {
+    this.topoSvc.getWorkspaces(this.search).subscribe(
+      (data: WorkspaceSearchResult) => {
         this.topos.push(...data.results);
         this.search.skip += data.results.length;
         this.hasMore = data.results.length === this.search.take;
@@ -70,27 +70,27 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     this.fetch();
   }
 
-  workers(topo: Topology): string {
+  workers(topo: Workspace): string {
     return topo.workers.map(p => p.personName).join();
   }
 
-  select(topo: Topology) {
+  select(topo: Workspace) {
     this.current = (this.current !== topo.id) ? topo.id : 0;
   }
 
-  delete(topo: Topology) {
-    this.topoSvc.deleteTopology(topo.id).subscribe(
+  delete(topo: Workspace) {
+    this.topoSvc.deleteWorkspace(topo.id).subscribe(
       () => {
         this.topos.splice(this.topos.indexOf(topo), 1);
       }
     );
   }
 
-  trackById(i: number, item: Topology): number {
+  trackById(i: number, item: Workspace): number {
     return item.id;
   }
 
-  changeLimit(topo: Topology, count: number) {
+  changeLimit(topo: Workspace, count: number) {
     topo.templateLimit += count;
     this.changedTopo.next(topo);
   }

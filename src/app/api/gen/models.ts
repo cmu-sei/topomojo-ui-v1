@@ -148,13 +148,13 @@ export interface TemplateDetail {
     isPublished?: boolean;
 }
 
-export interface TopologySummarySearchResult {
+export interface WorkspaceSummarySearchResult {
     search?: Search;
     total?: number;
-    results?: Array<TopologySummary>;
+    results?: Array<WorkspaceSummary>;
 }
 
-export interface TopologySummary {
+export interface WorkspaceSummary {
     id?: number;
     name?: string;
     description?: string;
@@ -166,18 +166,17 @@ export interface TopologySummary {
     whenCreated?: string;
 }
 
-export interface TopologySearchResult {
+export interface WorkspaceSearchResult {
     search?: Search;
     total?: number;
-    results?: Array<Topology>;
+    results?: Array<Workspace>;
 }
 
-export interface Topology {
+export interface Workspace {
     id?: number;
     globalId?: string;
     name?: string;
     description?: string;
-    document?: string;
     documentUrl?: string;
     shareCode?: string;
     author?: string;
@@ -200,12 +199,12 @@ export interface Worker {
     canEdit?: boolean;
 }
 
-export interface NewTopology {
+export interface NewWorkspace {
     name?: string;
     description?: string;
 }
 
-export interface ChangedTopology {
+export interface ChangedWorkspace {
     id?: number;
     name?: string;
     description?: string;
@@ -219,12 +218,12 @@ export interface PrivilegedWorkspaceChanges {
     templateLimit?: number;
 }
 
-export interface TopologyStateAction {
+export interface WorkspaceStateAction {
     id?: number;
-    type?: TopologyStateActionTypeEnum;
+    type?: WorkspaceStateActionTypeEnum;
 }
 
-export interface TopologyState {
+export interface WorkspaceState {
     id?: number;
     shareCode?: string;
     isPublished?: boolean;
@@ -236,12 +235,11 @@ export interface VmOptions {
     net?: Array<string>;
 }
 
-export interface DisplayInfo {
+export interface ConsoleSummary {
     id?: string;
-    topoId?: string;
+    workspaceId?: string;
     name?: string;
     url?: string;
-    conditions?: string;
     isRunning?: boolean;
 }
 
@@ -286,7 +284,6 @@ export interface VmOperation {
 }
 
 export interface KeyValuePair {
-    id?: number;
     key?: string;
     value?: string;
 }
@@ -296,7 +293,7 @@ export interface VmAnswer {
     choiceKey?: string;
 }
 
-export enum TopologyStateActionTypeEnum {
+export enum WorkspaceStateActionTypeEnum {
     share = <any>'share',
     unshare = <any>'unshare',
     publish = <any>'publish',

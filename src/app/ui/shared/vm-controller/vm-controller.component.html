@@ -21,10 +21,10 @@
       *ngIf="vm.id"
       mat-icon-button><mat-icon>tv</mat-icon></button>
     <button (click)="vmaction('start')" matTooltip="start"
-      *ngIf="vm.id && vm.state!==1"
+      *ngIf="vm.id && vm.state!=='running'"
       mat-icon-button><mat-icon>play_arrow</mat-icon></button>
     <button (click)="vmaction('stop')" matTooltip="stop"
-      *ngIf="vm.id && vm.state===1"
+      *ngIf="vm.id && vm.state==='running'"
       mat-icon-button><mat-icon>stop</mat-icon></button>
     <button (click)="vmaction('save')" matTooltip="save"
       *ngIf="canSave()"

@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { ApiSettings } from './api-settings';
 import { GeneratedTopologyService } from './gen/topology.service';
 // tslint:disable-next-line:max-line-length
-import { ChangedTopology, GameState, NewTopology, Search, Template, Topology, TopologySearchResult, TopologyState, TopologySummary, TopologySummarySearchResult, VmOptions, VmState, Worker } from './gen/models';
+import { ChangedWorkspace, GameState, NewWorkspace, Search, Template, Workspace, WorkspaceSearchResult, WorkspaceState, WorkspaceSummary, WorkspaceSummarySearchResult, VmOptions, VmState, Worker } from './gen/models';
 
 @Injectable()
 export class TopologyService extends GeneratedTopologyService {

@@ -1,7 +1,7 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@aspnet/signalr';
+import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import { AuthService, AuthTokenState } from './auth.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { SettingsService } from './settings.service';

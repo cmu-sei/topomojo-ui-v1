@@ -17,7 +17,7 @@ import { MatDrawer } from '@angular/material/sidenav';
 })
 export class DocumentEditorComponent implements OnInit, OnDestroy {
 
-  @ViewChild('imageDrawer') imageDrawer: MatDrawer;
+  @ViewChild('imageDrawer', {static: false}) imageDrawer: MatDrawer;
   private converter: Converter;
   id: string;
   rendered: string;

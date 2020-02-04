@@ -19,7 +19,7 @@ import { SettingsService } from './svc/settings.service';
 export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   title = 'app';
   altTheme = false;
-  @ViewChild(MatSidenav) sidenav: MatSidenav;
+  @ViewChild(MatSidenav, {static: true}) sidenav: MatSidenav;
   private dialogRef: MatDialogRef<ExpiringDialogComponent>;
   private dialogCloseSubscription: Subscription;
   private tokenState: AuthTokenState = AuthTokenState.invalid;

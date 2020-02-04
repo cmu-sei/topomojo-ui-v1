@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 import { ApiSettings } from '../api-settings';
 import { GeneratedService } from './_service';
 // tslint:disable-next-line:max-line-length
-import { ChangedTopology, PrivilegedWorkspaceChanges, GameState, NewTopology, Player, Search, Template, Topology, TopologySearchResult, TopologyState, TopologyStateAction, TopologyStateActionTypeEnum, TopologySummary, TopologySummarySearchResult, VmOptions, VmState, Worker } from './models';
+import { ChangedWorkspace, PrivilegedWorkspaceChanges, GameState, NewWorkspace, Player, Search, Template, Workspace, WorkspaceSearchResult, WorkspaceState, WorkspaceStateAction, WorkspaceStateActionTypeEnum, WorkspaceSummary, WorkspaceSummarySearchResult, VmOptions, VmState, Worker } from './models';
 
 @Injectable()
 export class GeneratedTopologyService extends GeneratedService {
@@ -17,35 +17,35 @@ export class GeneratedTopologyService extends GeneratedService {
        protected api: ApiSettings
     ) { super(http, api); }
 
-    public getTopologySummaries(search: Search): Observable<TopologySummarySearchResult> {
-        return this.http.get<TopologySummarySearchResult>(this.api.url + '/api/topology/summaries' + this.paramify(search));
+    public getWorkspaceSummaries(search: Search): Observable<WorkspaceSummarySearchResult> {
+        return this.http.get<WorkspaceSummarySearchResult>(this.api.url + '/api/workspace/summaries' + this.paramify(search));
     }
-    public getTopologies(search: Search): Observable<TopologySearchResult> {
-        return this.http.get<TopologySearchResult>(this.api.url + '/api/topologies' + this.paramify(search));
+    public getWorkspaces(search: Search): Observable<WorkspaceSearchResult> {
+        return this.http.get<WorkspaceSearchResult>(this.api.url + '/api/workspaces' + this.paramify(search));
     }
-    public putTopology(model: ChangedTopology): Observable<any> {
-        return this.http.put<any>(this.api.url + '/api/topology', model);
+    public putWorkspace(model: ChangedWorkspace): Observable<any> {
+        return this.http.put<any>(this.api.url + '/api/workspace', model);
     }
-    public putTopologyPriv(model: PrivilegedWorkspaceChanges): Observable<any> {
-        return this.http.put<any>(this.api.url + '/api/topology/priv', model);
+    public putWorkspacePriv(model: PrivilegedWorkspaceChanges): Observable<any> {
+        return this.http.put<any>(this.api.url + '/api/workspace/priv', model);
     }
-    public postTopology(model: NewTopology): Observable<Topology> {
-        return this.http.post<Topology>(this.api.url + '/api/topology', model);
+    public postWorkspace(model: NewWorkspace): Observable<Workspace> {
+        return this.http.post<Workspace>(this.api.url + '/api/workspace', model);
     }
-    public getTopology(id: number): Observable<Topology> {
-        return this.http.get<Topology>(this.api.url + '/api/topology/' + id);
+    public getWorkspace(id: number): Observable<Workspace> {
+        return this.http.get<Workspace>(this.api.url + '/api/workspace/' + id);
     }
-    public deleteTopology(id: number): Observable<boolean> {
-        return this.http.delete<boolean>(this.api.url + '/api/topology/' + id);
+    public deleteWorkspace(id: number): Observable<boolean> {
+        return this.http.delete<boolean>(this.api.url + '/api/workspace/' + id);
     }
-    public getTopologyGames(id: number): Observable<Array<GameState>> {
-        return this.http.get<Array<GameState>>(this.api.url + '/api/topology/' + id + '/games');
+    public getWorkspaceGames(id: number): Observable<Array<GameState>> {
+        return this.http.get<Array<GameState>>(this.api.url + '/api/workspace/' + id + '/games');
     }
-    public deleteTopologyGames(id: number): Observable<boolean> {
-        return this.http.delete<boolean>(this.api.url + '/api/topology/' + id + '/games');
+    public deleteTopoloyGames(id: number): Observable<boolean> {
+        return this.http.delete<boolean>(this.api.url + '/api/workspace/' + id + '/games');
     }
-    public postTopologyAction(id: number, action: TopologyStateAction): Observable<TopologyState> {
-        return this.http.post<TopologyState>(this.api.url + '/api/topology/' + id + '/action', action);
+    public postWorkspaceAction(id: number, action: WorkspaceStateAction): Observable<WorkspaceState> {
+        return this.http.post<WorkspaceState>(this.api.url + '/api/workspace/' + id + '/action', action);
     }
     public postWorkerCode(code: string): Observable<boolean> {
         return this.http.post<boolean>(this.api.url + '/api/worker/enlist/' + code, {});
@@ -53,11 +53,11 @@ export class GeneratedTopologyService extends GeneratedService {
     public deleteWorker(id: number): Observable<boolean> {
         return this.http.delete<boolean>(this.api.url + '/api/worker/' + id);
     }
-    public getTopologyIsos(id: string): Observable<VmOptions> {
-        return this.http.get<VmOptions>(this.api.url + '/api/topology/' + id + '/isos');
+    public getWorkspaceIsos(id: string): Observable<VmOptions> {
+        return this.http.get<VmOptions>(this.api.url + '/api/workspace/' + id + '/isos');
     }
-    public getTopologyNets(id: string): Observable<VmOptions> {
-        return this.http.get<VmOptions>(this.api.url + '/api/topology/' + id + '/nets');
+    public getWorkspaceNets(id: string): Observable<VmOptions> {
+        return this.http.get<VmOptions>(this.api.url + '/api/workspace/' + id + '/nets');
     }
 
 }

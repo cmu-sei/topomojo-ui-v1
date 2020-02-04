@@ -13,7 +13,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
   styleUrls: ['./chat-panel.component.scss']
 })
 export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
-  @ViewChild('scrollMe') private messagePanel: ElementRef;
+  @ViewChild('scrollMe', {static: false}) private messagePanel: ElementRef;
   messages = new Array<RelativeMessage>();
   typers = '';
   newMessage = '';

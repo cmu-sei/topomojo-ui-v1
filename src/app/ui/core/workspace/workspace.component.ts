@@ -2,7 +2,7 @@
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { Topology, Template, TemplateSummary } from '../../../api/gen/models';
+import { Workspace, Template, TemplateSummary } from '../../../api/gen/models';
 import { TopologyService } from '../../../api/topology.service';
 import { NotificationService } from '../../../svc/notification.service';
 import { SettingsService } from '../../../svc/settings.service';
@@ -21,7 +21,7 @@ import { VmControllerComponent } from '../../shared/vm-controller/vm-controller.
 export class WorkspaceComponent implements OnInit, OnDestroy {
 
   id: number;
-  workspace: Topology;
+  workspace: Workspace;
   gameCount = 0;
   private subs: Subscription[] = [];
   errors: any[] = [];
@@ -51,8 +51,8 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
     this.toolbar.addButtons([ this.collabButton ]);
     // setTimeout(() => this.toolbar.sideComponent = 'chat', 1);
 
-    this.service.getTopology(this.id).subscribe(
-      (result: Topology) => {
+    this.service.getWorkspace(this.id).subscribe(
+      (result: Workspace) => {
           this.workspace = result;
           // this.router.navigate([{ outlets: { sidenav: ['chat', this.workspace.globalId]}}]);
           this.startListening();
@@ -168,7 +168,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   }
 
   deleted() {
-    this.service.deleteTopology(this.workspace.id).subscribe(
+    this.service.deleteWorkspace(this.workspace.id).subscribe(
       (r: boolean) => {
         this.router.navigate(['/topo']);
       }
@@ -176,7 +176,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   }
 
   deleteGamespaces() {
-    this.service.deleteTopologyGames(this.workspace.id).subscribe(
+    this.service.deleteTopoloyGames(this.workspace.id).subscribe(
       (result) => {
           if (result) {
               this.workspace.gamespaceCount = 0;
