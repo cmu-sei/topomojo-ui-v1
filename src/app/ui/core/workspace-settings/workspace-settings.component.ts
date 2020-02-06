@@ -21,7 +21,7 @@ export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
   profile: Profile = {};
   hostUrl = '';
   inviteUrl = '';
-  @ViewChild('form', {static: false}) form: NgForm;
+  @ViewChild('form') form: NgForm;
 
   constructor(
     private service: TopologyService,

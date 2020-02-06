@@ -40,8 +40,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   stateButtonIcons: any = {};
   stateIcon = '';
   console: ConsoleService;
-  @ViewChild(MatDrawer, {static: false}) drawer: MatDrawer;
-  @ViewChild('consoleCanvas', {static: false}) consoleCanvas: ElementRef;
+  @ViewChild(MatDrawer) drawer: MatDrawer;
+  @ViewChild('consoleCanvas') consoleCanvas: ElementRef;
   subs: Array<Subscription> = [];
   private hotspot = { x: 0, y: 0, w: 20, h: 20 };
   isoSource: IsoDataSource;

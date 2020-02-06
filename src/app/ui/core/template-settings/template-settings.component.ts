@@ -17,7 +17,7 @@ export class TemplateSettingsComponent implements OnInit, AfterViewInit {
   @Input() template: Template;
   @Input() hasVm = false;
   // @Input() workspaceId: string;
-  @ViewChild(NgForm, {static: false}) form: NgForm;
+  @ViewChild(NgForm) form: NgForm;
   isoSource: IsoDataSource;
   isoDirty = false;
   showingIsos = false;

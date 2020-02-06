@@ -32,7 +32,7 @@ import { CommonModule } from '@angular/common';
     RouterModule.forRoot([
       {
         path: 'admin',
-        loadChildren: './ui/admin/admin.module#AdminModule'
+        loadChildren: () => import('./ui/admin/admin.module').then(m => m.AdminModule)
       },
       { path: '', component: WelcomeComponent, pathMatch: 'full' },
       { path: '**', component: PageNotFoundComponent }

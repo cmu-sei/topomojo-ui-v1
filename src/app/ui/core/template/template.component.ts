@@ -23,7 +23,7 @@ export class TemplateComponent implements OnInit {
   @Output() cloned = new EventEmitter<Template>();
   vm: Vm = {};
   private isoSource: IsoDataSource;
-  @ViewChild(VmControllerComponent, {static: false}) vmcontroller: VmControllerComponent;
+  @ViewChild(VmControllerComponent) vmcontroller: VmControllerComponent;
 
   constructor(
     private templateSvc: TemplateService,

@@ -19,8 +19,8 @@ export class SelectTableComponent implements OnInit, AfterViewInit {
   @Input() tableColumns: Array<string> = ['name'];
   @Input() filters: Array<string> = [];
   @Output() selected = new EventEmitter<any>();
-  @ViewChild('input', {static: false}) input: ElementRef;
-  @ViewChild(MatPaginator, {static: false}) paginator: MatPaginator;
+  @ViewChild('input') input: ElementRef;
+  @ViewChild(MatPaginator) paginator: MatPaginator;
 
   constructor() { }
 
