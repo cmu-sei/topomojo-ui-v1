@@ -1,15 +1,14 @@
 // Copyright 2019 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit } from '@angular/core';
-import { Router, ActivatedRouteSnapshot, ActivatedRoute, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'topomojo-admin',
   templateUrl: './admin.component.html',
   styleUrls: ['./admin.component.scss']
 })
-export class AdminComponent implements OnInit {
+export class AdminComponent {
+
   navLinks: Array<NavLink> = [
     { label: 'Dashboard', path: 'dash' },
     { label: 'Gamespace', path: 'mojo' },
@@ -18,16 +17,6 @@ export class AdminComponent implements OnInit {
     { label: 'Machines', path: 'vms' },
     { label: 'People', path: 'people' }
   ];
-  showDefault = true;
-
-  constructor(
-    private router: Router,
-    private route: ActivatedRoute
-  ) { }
-
-  ngOnInit() {
-    this.router.navigate(['admin', 'dash']);
-  }
 
 }
 

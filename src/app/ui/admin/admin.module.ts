@@ -43,15 +43,14 @@ import { DashboardComponent } from './dashboard/dashboard.component';
     MatTooltipModule,
     RouterModule.forChild([
       { path: '', component: AdminComponent, canActivate: [AdminGuard, AuthGuard], children: [
-        {path: '', children: [
+          { path: '', redirectTo: 'dash' },
           { path: 'dash', component: DashboardComponent },
           { path: 'topo', component: WorkspacesComponent },
           { path: 'mojo', component: GamespacesComponent },
           { path: 'tempo', component: TemplatesComponent },
           { path: 'vms', component: MachinesComponent },
           { path: 'people', component: PeopleComponent },
-          // { path: '**', component: AdminComponent }
-        ]}
+          // { path: '**', redirectTo: 'dash' }
       ]}
     ])
   ],
