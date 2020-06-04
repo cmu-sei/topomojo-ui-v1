@@ -20,7 +20,7 @@ import { ProfileService } from 'src/app/api/profile.service';
 })
 export class WorkspaceComponent implements OnInit, OnDestroy {
 
-  id: string;
+  id = 0;
   workspace: Workspace;
   gameCount = 0;
   private subs: Subscription[] = [];
@@ -51,15 +51,13 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    this.id = this.route.snapshot.paramMap.get('id');
+    this.id = +this.route.snapshot.paramMap.get('id');
 
     this.toolbar.addButtons([ this.collabButton ]);
-    // setTimeout(() => this.toolbar.sideComponent = 'chat', 1);
 
     this.service.load(this.id).subscribe(
       (result: Workspace) => {
           this.workspace = result;
-          // this.router.navigate([{ outlets: { sidenav: ['chat', this.workspace.globalId]}}]);
           this.startListening();
           this.settingsOpened = this.workspace.templates.length === 0;
       },

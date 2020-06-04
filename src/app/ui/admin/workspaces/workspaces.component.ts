@@ -73,7 +73,7 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   select(workspace: WorkspaceSummary) {
     if (this.current?.id !== workspace.id) {
-      this.workspaceSvc.load(workspace.globalId).subscribe(
+      this.workspaceSvc.load(workspace.id).subscribe(
         w => this.current = w
       );
     } else {

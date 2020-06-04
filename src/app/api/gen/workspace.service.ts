@@ -20,7 +20,7 @@ export class GeneratedWorkspaceService extends GeneratedService {
     public list(search: Search): Observable<WorkspaceSummary[]> {
         return this.http.get<WorkspaceSummary[]>(this.api.url + '/api/workspaces' + this.paramify(search));
     }
-    public load(id: string): Observable<Workspace> {
+    public load(id: number): Observable<Workspace> {
         return this.http.get<Workspace>(this.api.url + '/api/workspace/' + id);
     }
     public update(model: ChangedWorkspace): Observable<any> {
