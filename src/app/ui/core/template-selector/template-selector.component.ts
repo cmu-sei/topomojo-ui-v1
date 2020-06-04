@@ -1,12 +1,9 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit, ViewChild, AfterViewInit, ElementRef, EventEmitter, Output, Input } from '@angular/core';
-import { DataSource, CollectionViewer } from '@angular/cdk/collections';
-import { TemplateSummary, TemplateSummarySearchResult, Search } from '../../../api/gen/models';
-import { Observable, BehaviorSubject, of, fromEvent } from 'rxjs';
+
+import { Component, OnInit, EventEmitter, Output } from '@angular/core';
+import { TemplateSummary } from '../../../api/gen/models';
 import { TemplateService } from '../../../api/template.service';
-import { catchError, tap, debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
-import { MatPaginator } from '@angular/material/paginator';
 import { TemplateDataSource } from '../../datasources';
 
 @Component({

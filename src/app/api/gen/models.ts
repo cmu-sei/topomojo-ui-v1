@@ -1,5 +1,8 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
+import { SettingsService } from "src/app/svc/settings.service";
+
 export interface CachedConnection {
     id?: string;
     room?: string;
@@ -34,9 +37,11 @@ export interface Gamespace {
     id?: number;
     globalId?: string;
     name?: string;
+    slug?: string;
+    audience?: string;
     whenCreated?: string;
-    topologyDocument?: string;
-    topologyId?: number;
+    workspaceDocument?: string;
+    workspaceId?: number;
     players?: Array<Player>;
 }
 
@@ -53,8 +58,9 @@ export interface GameState {
     id?: number;
     name?: string;
     globalId?: string;
+    audience?: string;
     whenCreated?: string;
-    topologyDocument?: string;
+    workspaceDocument?: string;
     shareCode?: string;
     players?: Array<Player>;
     vms?: Array<VmState>;
@@ -67,48 +73,38 @@ export interface VmState {
     isRunning?: boolean;
 }
 
-export interface ProfileSearchResult {
-    search?: Search;
-    total?: number;
-    results?: Array<Profile>;
-}
-
 export interface Search {
     term?: string;
     skip?: number;
     take?: number;
     sort?: string;
-    filters?: Array<string>;
+    filter?: Array<string>;
 }
 
-export interface Profile {
+export interface UserProfile {
     id?: number;
     globalId?: string;
     name?: string;
+    role?: string;
     isAdmin?: boolean;
     workspaceLimit?: number;
     whenCreated?: string;
 }
 
-export interface ChangedProfile {
+export interface ChangedUser {
     globalId?: string;
     name?: string;
-}
-
-export interface TemplateSummarySearchResult {
-    search?: Search;
-    total?: number;
-    results?: Array<TemplateSummary>;
 }
 
 export interface TemplateSummary {
     id?: number;
     name?: string;
     description?: string;
-    topologyId?: number;
-    topologyName?: string;
+    workspaceId?: number;
+    workspaceName?: string;
     parentId?: string;
     parentName?: string;
+    isPublished?: boolean;
 }
 
 export interface Template {
@@ -119,9 +115,10 @@ export interface Template {
     description?: string;
     networks?: string;
     iso?: string;
+    guestinfo?: string;
     isHidden?: boolean;
-    topologyId?: number;
-    topologyGlobalId?: string;
+    workspaceId?: number;
+    workspaceGlobalId?: string;
 }
 
 export interface ChangedTemplate {
@@ -130,13 +127,14 @@ export interface ChangedTemplate {
     description?: string;
     networks?: string;
     iso?: string;
+    guestinfo?: string;
     isHidden?: boolean;
-    topologyId?: number;
+    workspaceId?: number;
 }
 
 export interface TemplateLink {
     templateId?: number;
-    topologyId?: number;
+    workspaceId?: number;
 }
 
 export interface TemplateDetail {
@@ -144,48 +142,40 @@ export interface TemplateDetail {
     name?: string;
     description?: string;
     networks?: string;
+    guestinfo?: string;
     detail?: string;
     isPublished?: boolean;
 }
 
-export interface WorkspaceSummarySearchResult {
-    search?: Search;
-    total?: number;
-    results?: Array<WorkspaceSummary>;
-}
-
 export interface WorkspaceSummary {
     id?: number;
+    globalId?: string;
     name?: string;
+    slug?: string;
     description?: string;
     canManage?: boolean;
     canEdit?: boolean;
     isPublished?: boolean;
-    isLocked?: boolean;
     author?: string;
+    audience?: string;
     whenCreated?: string;
-}
-
-export interface WorkspaceSearchResult {
-    search?: Search;
-    total?: number;
-    results?: Array<Workspace>;
 }
 
 export interface Workspace {
     id?: number;
     globalId?: string;
     name?: string;
+    slug?: string;
     description?: string;
     documentUrl?: string;
     shareCode?: string;
     author?: string;
+    audience?: string;
     whenCreated?: string;
     canManage?: boolean;
     canEdit?: boolean;
     templateLimit?: number;
     isPublished?: boolean;
-    isLocked?: boolean;
     gamespaceCount?: number;
     workers?: Array<Worker>;
     templates?: Array<Template>;
@@ -209,25 +199,15 @@ export interface ChangedWorkspace {
     name?: string;
     description?: string;
     author?: string;
+    audience?: string;
     isPublished?: boolean;
     documentUrl?: string;
-}
-
-export interface PrivilegedWorkspaceChanges {
-    id?: number;
     templateLimit?: number;
-}
-
-export interface WorkspaceStateAction {
-    id?: number;
-    type?: WorkspaceStateActionTypeEnum;
 }
 
 export interface WorkspaceState {
     id?: number;
     shareCode?: string;
-    isPublished?: boolean;
-    isLocked?: boolean;
 }
 
 export interface VmOptions {
@@ -237,7 +217,7 @@ export interface VmOptions {
 
 export interface ConsoleSummary {
     id?: string;
-    workspaceId?: string;
+    isolationId?: string;
     name?: string;
     url?: string;
     isRunning?: boolean;
@@ -293,15 +273,6 @@ export interface VmAnswer {
     choiceKey?: string;
 }
 
-export enum WorkspaceStateActionTypeEnum {
-    share = <any>'share',
-    unshare = <any>'unshare',
-    publish = <any>'publish',
-    unpublish = <any>'unpublish',
-    lock = <any>'lock',
-    unlock = <any>'unlock'
-}
-
 export enum VmStateEnum {
     off = <any>'off',
     running = <any>'running',
@@ -314,4 +285,11 @@ export enum VmOperationTypeEnum {
     save = <any>'save',
     revert = <any>'revert',
     delete = <any>'delete'
+}
+
+export interface JanitorReport {
+  id?: number;
+  name?: string;
+  reason?: string;
+  age?: string;
 }

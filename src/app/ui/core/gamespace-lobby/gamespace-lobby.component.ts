@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { GamespaceService } from '../../../api/gamespace.service';
@@ -22,7 +22,7 @@ export class GamespaceLobbyComponent implements OnInit {
   }
 
   reload() {
-    this.gamespaceSvc.getGamespaces('').subscribe(
+    this.gamespaceSvc.list('').subscribe(
       (games: Array<Gamespace>) => {
         this.games = games;
         this.activated.emit(!!games.length);
@@ -31,7 +31,7 @@ export class GamespaceLobbyComponent implements OnInit {
   }
 
   delete(id: number) {
-    this.gamespaceSvc.deleteGamespace(id)
+    this.gamespaceSvc.delete(id)
     .subscribe(result => {
         this.reload();
     });

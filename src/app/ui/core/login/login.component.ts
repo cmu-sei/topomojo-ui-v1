@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit } from '@angular/core';
 import { SettingsService } from '../../../svc/settings.service';
 import { AuthService } from '../../../svc/auth.service';
@@ -23,27 +24,18 @@ export class LoginComponent implements OnInit {
   ) { }
 
   ngOnInit() {
-    this.authfrag = this.route.snapshot.fragment;
-    if (this.authfrag) {
-      this.authSvc.externalLoginCallback(this.authfrag)
-      .then(
-        (user) => {
-          this.router.navigateByUrl(this.authSvc.cleanUrl(user.state) || '/topo');
-        },
-        (err) => {
-          console.log(err);
-          this.authmsg = (err.error || err).message;
-        }
-      );
-    } else {
-      this.authority = this.authSvc.authority;
-      if (this.authority) { this.login(); }
+
+    this.authority = this.authSvc.authority;
+
+    if (this.authority) {
+      this.login();
     }
   }
 
   login(): void {
     this.authSvc.externalLogin(
-      this.authSvc.redirectUrl || this.route.snapshot.params['url'] );
+      this.authSvc.redirectUrl || this.route.snapshot.params['url']
+    );
   }
 
 }

@@ -1,11 +1,13 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div *ngIf="template" class="outer">
+
   <form #form="ngForm" [ngFormOptions]="{updateOn: 'change'}" (ngSubmit)="update()">
     <input type="hidden" name="id" [ngModel]="template.id">
-    <input type="hidden" name="topologyId" [ngModel]="template.topologyId">
+    <input type="hidden" name="workspaceId" [ngModel]="template.workspaceId">
     <input type="hidden" name="iso" [ngModel]="template.iso">
+
     <div>
       <mat-form-field>
         <input [disabled]="hasVm" matInput required type="text" name="name"
@@ -19,9 +21,9 @@
     <div>
       <mat-form-field>
         <textarea [disabled]="hasVm" matInput type="textarea" name="description"
-          placeholder="Description"
-          [(ngModel)]="template.description" maxlength="300"></textarea>
-        <mat-hint align="end">{{(''+template.description).length}} / 300</mat-hint>
+          placeholder="Description" autocomplete="false" spellcheck="false"
+          [(ngModel)]="template.description" maxlength="255"></textarea>
+        <mat-hint align="end">{{(''+template.description).length}} / 255</mat-hint>
       </mat-form-field>
     </div>
 
@@ -29,9 +31,19 @@
       <mat-form-field>
         <input [disabled]="hasVm" matInput type="text" name="networks"
         placeholder="Networks"
-        [(ngModel)]="template.networks" maxlength="30">
+        [(ngModel)]="template.networks" maxlength="64">
         <mat-hint>Space-delimited network names</mat-hint>
-        <mat-hint align="end">{{(''+template.networks).length}} / 30</mat-hint>
+        <mat-hint align="end">{{(''+template.networks).length}} / 64</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field>
+        <textarea [disabled]="hasVm" matInput type="textarea" name="guestinfo"
+          placeholder="Custom Settings" autocomplete="false" spellcheck="false"
+          [(ngModel)]="template.guestinfo" maxlength="255"></textarea>
+        <mat-hint>key = value (lines commented with # are ignored)</mat-hint>
+        <mat-hint align="end">{{(''+template.guestinfo).length}} / 255</mat-hint>
       </mat-form-field>
     </div>
 

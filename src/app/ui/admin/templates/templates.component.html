@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div class="filters">
@@ -11,13 +11,16 @@
 <topomojo-template-creator *ngIf="showCreator" (created)="created($event)"></topomojo-template-creator>
 
 <mat-card *ngFor="let template of templates; trackBy: trackById" class="card">
+
   <div class="detail">
     <div>{{template.name}} <span *ngIf="template.parentName">({{template.parentName}})</span>
       <mat-icon *ngIf="template.isPublished">public</mat-icon>
     </div>
-    <div class="mat-caption">{{ template.topologyName || "Stock" }}</div>
+
+    <div class="mat-caption">{{ template.workspaceName || "Stock" }}</div>
+
     <div *ngIf="current===template.id">
-      <p *ngIf="!template.topologyId" class="mat-caption">
+      <p *ngIf="!template.workspaceId" class="mat-caption">
         Note: there is no isolation checking outside of a workspace.
         So take care when managing stock templates.  Ideally, this vm
         controller should only be used for new (unpublished) templates, or when you otherwise know
@@ -26,16 +29,19 @@
       <topomojo-vm-controller [template]="template"></topomojo-vm-controller>
       <topomojo-template-detail-form [template]="detail"></topomojo-template-detail-form>
     </div>
+
   </div>
+
   <div class="actions">
     <button matTooltip="Edit" (click)="select(template)" mat-mini-fab>
       <mat-icon>create</mat-icon>
     </button>
-    <a matTooltip="Navigate" [routerLink]="['/topo', template.topologyId]" [disabled]="!template.topologyId" mat-mini-fab>
+    <a matTooltip="Navigate" [routerLink]="['/topo', template.workspaceId]" [disabled]="!template.workspaceId" mat-mini-fab>
       <mat-icon>build</mat-icon>
     </a>
     <topomojo-confirm-button (confirmed)="delete(template)" fab="true"></topomojo-confirm-button>
   </div>
+
 </mat-card>
 
 <div *ngIf="hasMore" class="center">

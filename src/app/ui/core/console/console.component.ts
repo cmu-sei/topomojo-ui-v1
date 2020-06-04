@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import {
   Component, OnInit, ViewChild, AfterViewInit,
   ElementRef, Input, Injector, HostListener, OnDestroy
@@ -7,7 +8,7 @@ import {
 import { ActivatedRoute } from '@angular/router';
 import { VmService } from '../../../api/vm.service';
 import { ConsoleSummary, VmOperationTypeEnum } from '../../../api/gen/models';
-import { catchError, debounceTime, map, distinctUntilChanged } from 'rxjs/operators';
+import { catchError, debounceTime, map, distinctUntilChanged, tap } from 'rxjs/operators';
 import { throwError as ObservableThrower, fromEvent, Subscription, timer } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { MockConsoleService } from './services/mock-console.service';
@@ -17,7 +18,7 @@ import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService, AuthTokenState } from '../../../svc/auth.service';
 import { IsoDataSource, IsoFile, VmNetDataSource } from '../../datasources';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 
 @Component({
   selector: 'topomojo-console',
@@ -43,18 +44,19 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(MatDrawer) drawer: MatDrawer;
   @ViewChild('consoleCanvas') consoleCanvas: ElementRef;
   subs: Array<Subscription> = [];
-  private hotspot = { x: 0, y: 0, w: 20, h: 20 };
+  private hotspot = { x: 0, y: 0, w: 8, h: 8 };
   isoSource: IsoDataSource;
   netSource: VmNetDataSource;
   feedback = '';
   feedbackState = '';
+  showCog = true;
 
   constructor(
     private injector: Injector,
     private route: ActivatedRoute,
     private titleSvc: Title,
     private vmSvc: VmService,
-    private topologySvc: TopologyService,
+    private topologySvc: WorkspaceService,
     private toolbar: ToolbarService,
     private tokenSvc: AuthService
   ) {
@@ -134,9 +136,9 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
         ))
       .subscribe(
         (info: ConsoleSummary) => {
-          if (info.workspaceId !== this.info.workspaceId) {
-            this.isoSource = new IsoDataSource(this.topologySvc, info.workspaceId);
-            this.netSource = new VmNetDataSource(this.topologySvc, info.workspaceId);
+          if (info.isolationId !== this.info.isolationId) {
+            this.isoSource = new IsoDataSource(this.topologySvc, info.isolationId);
+            this.netSource = new VmNetDataSource(this.topologySvc, info.isolationId);
           }
           this.info = info;
           this.console = (this.isMock())
@@ -168,7 +170,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   start(): void {
     this.changeState('starting');
-    this.vmSvc.postVmAction({
+    this.vmSvc.updateState({
       id: this.info.id,
       type: VmOperationTypeEnum.start
     }).subscribe(
@@ -180,7 +182,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   isoSelected(iso: IsoFile) {
     this.reconfigureFeedback('pending');
-    this.vmSvc.postVmChange(this.info.id, { key: 'iso', value: iso.path })
+    this.vmSvc.updateConfig(this.info.id, { key: 'iso', value: iso.path })
     .subscribe(
       () => {
         this.reconfigureFeedback('success');
@@ -191,7 +193,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   netSelected(net: IsoFile) {
     this.reconfigureFeedback('pending');
-    this.vmSvc.postVmChange(this.info.id, { key: 'net', value: net.path })
+    this.vmSvc.updateConfig(this.info.id, { key: 'net', value: net.path })
     .subscribe(
       () => {
         this.reconfigureFeedback('success');
@@ -248,8 +250,13 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subs.push(
       fromEvent(document, 'mousemove').pipe(
         debounceTime(100),
+        tap((e: MouseEvent) => {
+          if (this.drawer.opened && e.clientX < this.hotspot.x - 400) {
+            this.drawer.close();
+          }
+        }),
         map((e: MouseEvent) => {
-          return this.isConnected() && e.clientX > this.hotspot.x && e.clientY < this.hotspot.h;
+          return this.isConnected() && e.clientX > this.hotspot.x || e.clientY < this.hotspot.h;
         }),
         distinctUntilChanged()
       ).subscribe((hot: boolean) => {

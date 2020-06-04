@@ -1,12 +1,13 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ToolbarService } from '../../svc/toolbar.service';
-import { TopologyService } from '../../../api/topology.service';
-import { Search, Workspace, WorkspaceSearchResult, Profile, WorkspaceSummarySearchResult, WorkspaceSummary } from '../../../api/gen/models';
+import { WorkspaceService } from '../../../api/workspace.service';
+import { Search, WorkspaceSummary } from '../../../api/gen/models';
 import { UserService } from '../../../svc/user.service';
 import { SettingsService } from '../../../svc/settings.service';
-import { distinctUntilChanged, debounceTime, map, finalize, delay } from 'rxjs/operators';
+import { debounceTime, map, finalize } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -19,19 +20,17 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
   hasMore = false;
   showAdd = false;
   showGames = false;
-  showLoginMsg = false;
   fetching = false;
-  list: Array<WorkspaceSummary> = new Array<WorkspaceSummary>();
+  list = new Array<WorkspaceSummary>();
   model: Search = { sort: 'age', take: 25 };
   filter = '';
-  private profile: Profile = {};
   hasProfile = false;
   subs: Array<Subscription> = [];
   firstQuery = true;
 
   constructor(
     private toolbarSvc: ToolbarService,
-    private workspaceSvc: TopologyService,
+    private workspaceSvc: WorkspaceService,
     private userSvc: UserService,
     private settingsSvc: SettingsService
   ) { }
@@ -45,7 +44,6 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
           p =>  {
             this.hasProfile = p;
             if (p) { this.initToolbar(); }
-            this.showLoginMsg = !p;
             this.model.sort = this.settingsSvc.localSettings.lobbySort || 'age';
             const f = !!this.settingsSvc.localSettings.lobbyFilter
               ? this.settingsSvc.localSettings.lobbyFilter
@@ -88,26 +86,26 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
   }
 
   fetch(): void {
-    if (!this.model.filters || !this.model.filters.length) {
+    if (!this.model.filter || !this.model.filter.length) {
       return;
     }
 
     this.fetching = true;
-    this.workspaceSvc.getWorkspaceSummaries(this.model)
+    this.workspaceSvc.list(this.model)
     .pipe(
       finalize(() => this.fetching = false)
     )
     .subscribe(
-      (data: WorkspaceSummarySearchResult) => {
+      (data: WorkspaceSummary[]) => {
         if (this.model.skip > 0) {
-          this.list.concat(data.results);
+          this.list.concat(data);
         } else {
-          this.list = data.results;
+          this.list = data;
         }
         this.none = !this.list.length;
-        this.model.skip += data.results.length;
-        this.hasMore = data.results.length === this.model.take;
-        if (this.firstQuery && this.none && this.model.filters.indexOf('private') >= 0) {
+        this.model.skip += data.length;
+        this.hasMore = data.length === this.model.take;
+        if (this.firstQuery && this.none && this.model.filter.indexOf('private') >= 0) {
           setTimeout(() => {
             this.filterChanged({value: 'public'});
           }, 100);
@@ -121,7 +119,7 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
     if (e.value) {
       this.settingsSvc.updateLobbyFilter(e.value);
       this.filter = e.value;
-      this.model.filters = [ e.value ];
+      this.model.filter = [ e.value ];
       this.fetch_fresh();
     }
   }
@@ -135,11 +133,7 @@ export class WorkspaceLobbyComponent implements OnInit, OnDestroy {
     this.showGames = v;
   }
 
-  // hasProfile(): boolean {
-  //   return !!this.profile.id;
-  // }
-
-  trackById(i: number, item: WorkspaceSummary): number {
+  trackById(item: WorkspaceSummary): number {
     return item.id;
   }
 }

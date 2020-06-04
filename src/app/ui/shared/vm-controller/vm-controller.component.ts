@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, Output, EventEmitter, OnDestroy } from '@angular/core';
 import { Template, Vm, VmOperationTypeEnum } from '../../../api/gen/models';
@@ -63,7 +63,7 @@ export class VmControllerComponent implements OnInit, OnDestroy {
     if (!this.template.id && !this.vm.id) { return; }
 
     const q = (this.vm && this.vm.id)
-      ? this.vmSvc.getVm(this.vm.id)
+      ? this.vmSvc.load(this.vm.id)
       : this.vmSvc.getTemplateVm(this.template.id);
 
       q.subscribe(
@@ -90,7 +90,7 @@ export class VmControllerComponent implements OnInit, OnDestroy {
 
   deploy() {
     this.setTask('deploy');
-    this.vmSvc.postTemplateDeploy(this.template.id)
+    this.vmSvc.deployTemplate(this.template.id)
     .subscribe(
         data => {
             this.vm = data;
@@ -103,10 +103,10 @@ export class VmControllerComponent implements OnInit, OnDestroy {
 
   vmaction(type: VmOperationTypeEnum): void {
     this.setTask(type.toString());
-    this.vmSvc.postVmAction({
+    this.vmSvc.updateState({
         id: this.vm.id,
         type: type,
-        workspaceId: this.template.topologyId
+        workspaceId: this.template.workspaceId
     }).subscribe(
       (vm: Vm) => {
         this.vm = vm;
@@ -127,7 +127,7 @@ export class VmControllerComponent implements OnInit, OnDestroy {
   delete() {
     this.confirmingDelete = false;
     this.setTask('delete');
-    this.vmSvc.deleteVm(this.vm.id)
+    this.vmSvc.delete(this.vm.id)
       .subscribe(
         () => {
             this.vm = {};
@@ -139,7 +139,7 @@ export class VmControllerComponent implements OnInit, OnDestroy {
 
   initialize() {
     this.setTask('initializing');
-    this.vmSvc.postTemplateDisks(this.template.id)
+    this.vmSvc.initializeTemplate(this.template.id)
     .subscribe(() => {
             this.load();
         }, (err) => { this.onError(err.error || err); });

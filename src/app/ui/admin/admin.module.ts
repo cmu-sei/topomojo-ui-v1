@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AdminComponent } from './admin.component';
@@ -42,15 +43,18 @@ import { DashboardComponent } from './dashboard/dashboard.component';
     MatSlideToggleModule,
     MatTooltipModule,
     RouterModule.forChild([
-      { path: '', component: AdminComponent, canActivate: [AdminGuard, AuthGuard], children: [
-          { path: '', redirectTo: 'dash' },
+      { path: '', component: AdminComponent,
+        canActivate: [AdminGuard],
+        canActivateChild: [AdminGuard],
+        children: [
           { path: 'dash', component: DashboardComponent },
           { path: 'topo', component: WorkspacesComponent },
           { path: 'mojo', component: GamespacesComponent },
           { path: 'tempo', component: TemplatesComponent },
           { path: 'vms', component: MachinesComponent },
           { path: 'people', component: PeopleComponent },
-          // { path: '**', redirectTo: 'dash' }
+          // { path: '', redirectTo: 'dash' },
+          { path: '**', redirectTo: 'dash' }
       ]}
     ])
   ],

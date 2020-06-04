@@ -1,24 +1,31 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <mat-divider></mat-divider>
+
 <div class="card">
+
   <div class="text">
     <h2>{{summary.name}}</h2>
     <p>{{summary.description || 'No description available'}}</p>
     <p>By: {{summary.author}}</p>
     <p class="mat-caption">{{summary.whenCreated | ago }} on {{summary.whenCreated | shortdate }}</p>
   </div>
+
   <div class="tools">
       <a mat-mini-fab *ngIf="summary.canEdit" color="primary"
-      matTooltip="Build" [routerLink]="['/topo', summary.id]">
-      <mat-icon>build</mat-icon>
-    </a>
+        aria-label="navigate to workspace"
+        matTooltip="Build" [routerLink]="['/topo', summary.id, summary.slug]">
+        <mat-icon>build</mat-icon>
+      </a>
+
       <a [disabled]="!summary.isPublished"
       mat-mini-fab color="primary"
       matTooltip="Preview"
-      [routerLink]="['/mojo', summary.id]">
-      <mat-icon>flash_on</mat-icon>
+      aria-label="navigate to gamespace"
+      [routerLink]="['/mojo', summary.id, summary.slug]">
+        <mat-icon>flash_on</mat-icon>
       </a>
   </div>
+
 </div>

@@ -1,11 +1,11 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, Input, ViewChild, ElementRef, EventEmitter, Output, AfterViewInit } from '@angular/core';
-import { DataSource } from '@angular/cdk/collections';
 import { MatPaginator } from '@angular/material/paginator';
 import { fromEvent } from 'rxjs';
 import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
-import { IsoDataSource, IDataSource } from '../../datasources';
+import { IDataSource } from '../../datasources';
 
 @Component({
   selector: 'topomojo-select-table',
@@ -21,6 +21,7 @@ export class SelectTableComponent implements OnInit, AfterViewInit {
   @Output() selected = new EventEmitter<any>();
   @ViewChild('input') input: ElementRef;
   @ViewChild(MatPaginator) paginator: MatPaginator;
+  skip = 0;
 
   constructor() { }
 
@@ -45,11 +46,13 @@ export class SelectTableComponent implements OnInit, AfterViewInit {
   }
 
   queryChanged(): void {
+    this.skip = this.paginator.pageIndex * this.paginator.pageSize;
+
     this.dataSource.load({
       term: this.term,
       skip: this.paginator.pageIndex * this.paginator.pageSize,
       take: this.paginator.pageSize,
-      filters: this.filters
+      filter: this.filters
     });
   }
 

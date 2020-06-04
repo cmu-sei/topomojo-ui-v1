@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { AdminService } from '../admin.service';
 import { ChatService } from '../chat.service';
 import { ConsoleService } from '../console.service';
@@ -8,7 +9,7 @@ import { FileService } from '../file.service';
 import { GamespaceService } from '../gamespace.service';
 import { ProfileService } from '../profile.service';
 import { TemplateService } from '../template.service';
-import { TopologyService } from '../topology.service';
+import { WorkspaceService } from '../workspace.service';
 import { VmService } from '../vm.service';
 
 import { NgModule } from '@angular/core';
@@ -27,7 +28,7 @@ import { ApiSettings } from '../api-settings';
         GamespaceService,
         ProfileService,
         TemplateService,
-        TopologyService,
+        WorkspaceService,
         VmService
     ]
 })

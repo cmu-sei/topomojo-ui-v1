@@ -1,77 +1,57 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit, Input, ViewChild, AfterViewChecked, AfterViewInit, Output, EventEmitter } from '@angular/core';
-import { Workspace, Profile, WorkspaceStateActionTypeEnum, ChangedWorkspace } from '../../../api/gen/models';
+
+import { Component, Input, ViewChild, Output, EventEmitter } from '@angular/core';
+import { Workspace, UserProfile, ChangedWorkspace } from '../../../api/gen/models';
 import { MatChipEvent } from '@angular/material/chips';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 import { UserService } from '../../../svc/user.service';
 import { SettingsService } from '../../../svc/settings.service';
 import { NgForm } from '@angular/forms';
-import { debounceTime } from 'rxjs/operators';
+import { ClipboardService } from 'src/app/svc/clipboard.service';
+import { timer } from 'rxjs';
 
 @Component({
   selector: 'topomojo-workspace-settings',
   templateUrl: './workspace-settings.component.html',
   styleUrls: ['./workspace-settings.component.scss']
 })
-export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
+export class WorkspaceSettingsComponent {
 
   @Input() workspace: Workspace;
   @Output() deleted = new EventEmitter<boolean>();
-  profile: Profile = {};
+  profile: UserProfile = {};
   hostUrl = '';
   inviteUrl = '';
   @ViewChild('form') form: NgForm;
 
   constructor(
-    private service: TopologyService,
+    private workspaceSvc: WorkspaceService,
     private userSvc: UserService,
-    private settingsSvc: SettingsService
-  ) { }
+    private settingsSvc: SettingsService,
+    private clipboard: ClipboardService
+  ) {
 
-  ngOnInit() {
     this.hostUrl = this.settingsSvc.hostUrl;
-    this.userSvc.profile$.subscribe(
-      (profile: Profile) => { this.profile = profile; }
-    );
-  }
 
-  ngAfterViewInit() {
-    // this.form.valueChanges.pipe(debounceTime(1000)).subscribe(
-    //   (model) => {
-    //     if (this.form.valid) {
-    //       this.service.putTopology(model as ChangedTopology).subscribe(
-    //         // TODO: animate feedback
-    //       );
-    //     }
-    //   }
-    // );
+    this.userSvc.profile$.subscribe(
+      (profile: UserProfile) => { this.profile = profile; }
+    );
+
   }
 
   update() {
     if (this.form.valid) {
-      this.service.putWorkspace(this.form.value as ChangedWorkspace).subscribe(
-        (t) => {
+      this.workspaceSvc.update(this.form.value as ChangedWorkspace).subscribe(
+        () => {
           this.form.reset(this.form.value);
         }
-        // TODO: animate feedback
-
       );
     }
   }
-  published(): void {
-    const v = !this.workspace.isPublished;
-    this.service.postWorkspaceAction(this.workspace.id, {
-        id: this.workspace.id,
-        type: v ? WorkspaceStateActionTypeEnum.publish : WorkspaceStateActionTypeEnum.unpublish
-    })
-    .subscribe(
-      () => { this.workspace.isPublished = v; }
-    );
-  }
 
   removeMember(e: MatChipEvent): void {
-    this.service.deleteWorker(e.chip.value)
+    this.workspaceSvc.deleteWorker(e.chip.value)
       .subscribe(
         () => {
           const i = this.workspace.workers.findIndex((worker) => worker.id === e.chip.value);
@@ -87,25 +67,21 @@ export class WorkspaceSettingsComponent implements OnInit, AfterViewInit {
     return `${this.hostUrl}/invitation/${this.workspace.shareCode}`;
   }
 
-  generateNewShareUrl() {
-    this.service.postWorkspaceAction(this.workspace.id, {
-      id: this.workspace.id,
-      type: WorkspaceStateActionTypeEnum.share
-    })
+  newInvitation() {
+    this.workspaceSvc.newInvitation(this.workspace.id)
       .subscribe(
         (data) => {
           this.workspace.shareCode = data.shareCode;
           this.inviteUrl = this.shareUrl();
-          // this.animateSuccess('share');
+          this.clipboard.copyToClipboard(this.inviteUrl);
+          timer(5000).subscribe(() => this.inviteUrl = '');
         },
-        (err) => {
-          // this.animateFailure('share');
-          // this.onError(err);
-        }
+        () => {}
       );
   }
 
   onDelete() {
     this.deleted.emit(true);
   }
+
 }

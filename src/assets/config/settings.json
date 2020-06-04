@@ -9,17 +9,21 @@
 
     "oidc": {
       "authority": "http://localhost:5000",
-      "client_id": "topomojo-client",
-      "redirect_uri": "http://localhost:4200/login",
+      "client_id": "topomojo-ui",
+      "redirect_uri": "http://localhost:4200/oidc",
       "silent_redirect_uri": "http://localhost:4200/oidc-silent",
       "post_logout_redirect_uri": "http://localhost:4200",
-      "response_type": "id_token token",
+      "response_type": "code",
       "scope": "openid profile topomojo-api",
       "automaticSilentRenew": false,
+      "includeIdTokenInSilentRenew": false,
       "filterProtocolClaims": true,
-      "loadUserInfo": false,
-      "accessTokenExpiringNotificationTime": 120
+      "loadUserInfo": true,
+      "accessTokenExpiringNotificationTime": 120,
+      "monitorSession": false
     },
+
+    "useLocalStorage": false,
 
     "urls": {
       "apiUrl": "http://localhost:5004",

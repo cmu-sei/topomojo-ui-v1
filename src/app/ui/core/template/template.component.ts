@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, Output, EventEmitter, ViewChild } from '@angular/core';
 import { Template, Vm, Workspace } from '../../../api/gen/models';
@@ -7,7 +7,7 @@ import { VmService } from '../../../api/vm.service';
 import { forkJoin, Observable } from 'rxjs';
 import { mapTo } from 'rxjs/operators';
 import { IsoDataSource } from '../../datasources';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 import { VmControllerComponent } from '../../shared/vm-controller/vm-controller.component';
 
 @Component({
@@ -21,18 +21,19 @@ export class TemplateComponent implements OnInit {
   // @Input() workspaceId: string;
   @Output() deleted = new EventEmitter<Template>();
   @Output() cloned = new EventEmitter<Template>();
+  @ViewChild(VmControllerComponent) vmcontroller: VmControllerComponent;
   vm: Vm = {};
   private isoSource: IsoDataSource;
-  @ViewChild(VmControllerComponent) vmcontroller: VmControllerComponent;
+  showSettings = false;
 
   constructor(
     private templateSvc: TemplateService,
-    private topologySvc: TopologyService,
+    private topologySvc: WorkspaceService,
     private vmSvc: VmService
   ) { }
 
   ngOnInit() {
-    this.isoSource = new IsoDataSource(this.topologySvc, this.template.topologyGlobalId);
+    this.isoSource = new IsoDataSource(this.topologySvc, this.template.workspaceGlobalId);
   }
 
   vmLoaded(vm: Vm) {
@@ -40,9 +41,9 @@ export class TemplateComponent implements OnInit {
   }
 
   unlink() {
-    this.templateSvc.postTemplateUnlink({
+    this.templateSvc.unlink({
       templateId: this.template.id,
-      topologyId: this.template.topologyId
+      workspaceId: this.template.workspaceId
     }).subscribe(t => {
       this.template = t;
       this.cloned.emit(t);
@@ -56,7 +57,7 @@ export class TemplateComponent implements OnInit {
     console.log(iso);
 
     if (this.vm.id) {
-        this.vmSvc.postVmChange(this.vm.id, { key: 'iso', value: iso }).subscribe(
+        this.vmSvc.updateConfig(this.vm.id, { key: 'iso', value: iso }).subscribe(
             (result) => {
 
             }
@@ -66,9 +67,9 @@ export class TemplateComponent implements OnInit {
 
   delete() {
 
-    let q: Observable<any> = this.templateSvc.deleteTemplate(this.template.id);
+    let q: Observable<any> = this.templateSvc.delete(this.template.id);
     if (!!this.vm.id) {
-      q = forkJoin([q, this.vmSvc.deleteVm(this.vm.id).pipe(mapTo(true))]);
+      q = forkJoin([q, this.vmSvc.delete(this.vm.id).pipe(mapTo(true))]);
     }
     q.subscribe(() => this.deleted.emit(this.template));
   }

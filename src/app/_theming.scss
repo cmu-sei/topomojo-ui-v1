@@ -1,16 +1,12 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 @import '~@angular/material/theming';
-//@import './cmu-tartan';
 
 @import './ui/core/welcome/theming';
 @import './ui/shared/error-div/theming';
 @import './ui/core/chat-panel/theming';
 @import './ui/core/console/theming';
-// @import './styles/api-theme';
-// @import './styles/markdown-theme';
-// @import './styles/svg-theme';
-// @import './styles/tables-theme';
 
 
 // Styles for the docs app that are based on the current theme.

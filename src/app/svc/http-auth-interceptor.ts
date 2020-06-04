@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
 import {Injectable, Injector} from '@angular/core';
@@ -14,13 +14,17 @@ export class AuthInterceptor implements HttpInterceptor {
     private auth: AuthService;
 
     intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-        if (req.url.match(/settings.*\.json$/)) {
+        if (req.url.match(/assets/)) {
             return next.handle(req);
         }
 
-        this.auth = this.injector.get(AuthService);
-        const authHeader = this.auth.auth_header();
-        const authReq = req.clone({setHeaders: {Authorization: authHeader}});
-        return next.handle(authReq);
+        // this.auth = this.injector.get(AuthService);
+        // const authHeader = this.auth.auth_header();
+        // const authReq = req.clone({setHeaders: {Authorization: this.injector.get(AuthService).auth_header()}});
+        return next.handle(
+            req.clone({setHeaders: {
+                Authorization: this.injector.get(AuthService).auth_header()
+            }})
+        );
     }
 }

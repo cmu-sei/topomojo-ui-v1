@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div *ngIf="profile" class="wrapper">
@@ -28,11 +28,13 @@
       <button mat-raised-button color="primary" type="submit" [disabled]="!form.dirty || !form.valid">Save Settings</button>
     </div>
 
-    <topomojo-error-div [errors]="errors"></topomojo-error-div>
+    <!-- <topomojo-error-div [errors]="errors"></topomojo-error-div> -->
   </form>
 
   <mat-divider></mat-divider>
+
   <div class="quiet-placard">
     <topomojo-confirm-button [disabled]="false" color="warn" icon="delete" text="Delete Profile" (confirmed)="delete()"></topomojo-confirm-button>
   </div>
+
 </div>

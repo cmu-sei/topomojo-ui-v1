@@ -1,12 +1,13 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, Input } from '@angular/core';
-import { BreakpointObserver, Breakpoints, BreakpointState } from '@angular/cdk/layout';
+
+import { Component, OnInit, Input } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
 import { Observable, Subject } from 'rxjs';
-import { map, debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { ToolbarService, NavbarButton, ToolbarState } from '../../svc/toolbar.service';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import { ToolbarService, ToolbarState } from '../../svc/toolbar.service';
 import { UserService } from '../../../svc/user.service';
-import { Profile } from '../../../api/gen/models';
+import { UserProfile } from '../../../api/gen/models';
 import { SettingsService } from '../../../svc/settings.service';
 
 @Component({
@@ -19,9 +20,9 @@ export class NavbarComponent implements OnInit {
   searchOpen = true;
   altTheme = false;
   @Input() sidenav = false;
-  public termSubject: Subject<string> = new Subject();
-  profile: Profile = {};
+  profile: UserProfile = {};
   term = '';
+  termSubject: Subject<string> = new Subject();
   term$: Observable<string> = this.termSubject.asObservable()
     .pipe(
       debounceTime(500),
@@ -31,7 +32,6 @@ export class NavbarComponent implements OnInit {
   appName: string;
 
   constructor(
-    private breakpointObserver: BreakpointObserver,
     private toolbarSvc: ToolbarService,
     private userSvc: UserService,
     private settingsSvc: SettingsService
@@ -54,7 +54,6 @@ export class NavbarComponent implements OnInit {
       }
     );
 
-    // this.toolbarSvc.term$ = this.term$;
     this.term$.subscribe(term => this.toolbarSvc.termChanged(term));
   }
 

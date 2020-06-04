@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Injectable, InjectionToken } from '@angular/core';
 import { Observable, Subject, of ,  throwError as observableThrowError } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
@@ -156,7 +157,7 @@ export interface Settings {
     maintMessage?: string;
     showdown?: ShowdownOptions;
     local?: LocalAppSettings;
-    useSessionStorage?: boolean;
+    useLocalStorage?: boolean;
 }
 
 export interface AppUrlSettings {

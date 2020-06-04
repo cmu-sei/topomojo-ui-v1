@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, Input } from '@angular/core';
 import { DocumentService } from '../../../api/document.service';
 import { finalize } from 'rxjs/operators';
@@ -35,14 +36,12 @@ export class DocumentImageManagerComponent implements OnInit {
 
   ngOnInit() {
     this.bucketId = this.route.snapshot.paramMap.get('key');
-    console.log(this.bucketId);
-    // this.bucketId = this.toolbar.sideData.key;
     this.list();
   }
 
   list() {
     this.images = [];
-    this.fileSvc.getImages(this.bucketId)
+    this.fileSvc.listImages(this.bucketId)
     .subscribe((result: ImageFile[]) => {
         this.images = result;
     });

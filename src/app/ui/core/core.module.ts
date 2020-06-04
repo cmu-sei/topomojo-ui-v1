@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { NgModule } from '@angular/core';
 import { LayoutModule } from '@angular/cdk/layout';
 import { FormsModule } from '@angular/forms';
@@ -64,6 +65,7 @@ import { ChatMessageComponent } from './chat-message/chat-message.component';
 import { EnlistComponent } from './enlist/enlist.component';
 import { DocumentImageManagerComponent } from './document-image-manager/document-image-manager.component';
 import { SharedModule } from '../shared/shared.module';
+import { OidcCallbackComponent } from './oidc-callback/oidc-callback.component';
 
 const mats = [
   MatFormFieldModule,
@@ -96,12 +98,16 @@ const mats = [
     RouterModule.forChild([
       { path: 'login', component: LoginComponent },
       { path: 'logout', component: LogoutComponent },
+      { path: 'oidc', component: OidcCallbackComponent },
       { path: 'oidc-silent', component: OidcSilentComponent },
       { path: 'invitation/:code', component: EnlistComponent, canActivate: [AuthGuard] },
       { path: 'topo', children: [
         { path: ':id', canActivate: [AuthGuard], children: [
+          { path: ':slug', component: WorkspaceComponent, children: [
+            { path: '', component: ChatPanelComponent, outlet: 'sidenav' }
+          ]},
+          { path: '', component: WorkspaceComponent},
           { path: '', component: ChatPanelComponent, outlet: 'sidenav' },
-          { path: '', component: WorkspaceComponent }
         ]},
         { path: 'doc/:key', children: [
             { path: '', component: DocumentImageManagerComponent, outlet: 'sidenav' },
@@ -110,10 +116,12 @@ const mats = [
         { path: '', component: WorkspaceLobbyComponent }
       ]},
       { path: 'mojo', children: [
-        { path: ':id', children: [
-          { path: 'live', component: GamespaceComponent, canActivate: [AuthGuard] },
+        { path: ':id', canActivate: [AuthGuard], children: [
+          { path: ':slug', component: GamespaceComponent, children: [
+            { path: '', component: ChatPanelComponent, outlet: 'sidenav' }
+          ]},
+          { path: '', component: GamespaceComponent},
           { path: '', component: ChatPanelComponent, outlet: 'sidenav' },
-          { path: '', component: GamespaceComponent }
         ]},
         { path: 'enlist/:code', component: EnlistComponent, canActivate: [AuthGuard] },
         { path: '', component: GamespaceLobbyComponent }
@@ -145,6 +153,7 @@ const mats = [
     ChatMessageComponent,
     EnlistComponent,
     DocumentImageManagerComponent,
+    OidcCallbackComponent,
   ],
   exports: [
     WelcomeComponent,

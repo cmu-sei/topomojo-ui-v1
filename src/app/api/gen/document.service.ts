@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
 import { Injectable } from '@angular/core';
@@ -16,10 +16,10 @@ export class GeneratedDocumentService extends GeneratedService {
        protected api: ApiSettings
     ) { super(http, api); }
 
-    public putDocument(id: string, text: string): Observable<any> {
+    public updateDocument(id: string, text: string): Observable<any> {
         return this.http.put<any>(this.api.url + '/api/document/' + id, text);
     }
-    public getImages(id: string): Observable<Array<ImageFile>> {
+    public listImages(id: string): Observable<Array<ImageFile>> {
         return this.http.get<Array<ImageFile>>(this.api.url + '/api/images/' + id);
     }
     public deleteImage(id: string, filename: string): Observable<ImageFile> {

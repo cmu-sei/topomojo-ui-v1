@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Vm, Search } from '../../../api/gen/models';
 import { VmService } from '../../../api/vm.service';
@@ -14,7 +15,7 @@ import { Subscription } from 'rxjs';
 export class MachinesComponent implements OnInit, OnDestroy {
   current = '';
   vms: Array<Vm> = [];
-  search: Search = { take: 26 };
+  search: Search = { take: 20 };
   hasMore = false;
   subs: Array<Subscription> = [];
 
@@ -48,11 +49,11 @@ export class MachinesComponent implements OnInit, OnDestroy {
   }
 
   more() {
-    this.vmSvc.getVms(this.search.term).subscribe(
+    this.vmSvc.list(this.search.term).subscribe(
       (data: Array<Vm>) => {
         this.vms = data;
-        // this.search.skip += data.results.length;
-        // this.hasMore = data.results.length === this.search.take;
+        // this.search.skip += data.length;
+        // this.hasMore = data.length === this.search.take;
       }
     );
   }
@@ -65,14 +66,8 @@ export class MachinesComponent implements OnInit, OnDestroy {
     if (!e.id) {
       this.current = '';
       this.vms.splice(this.vms.indexOf(vm), 1);
-      // setTimeout(() => {
-      // }, 500);
     }
   }
-  // filterChanged(e) {
-  //   this.search.filters = [e.value];
-  //   this.fetch();
-  // }
 
   trackById(i: number, item: Vm): string {
     return item.id;

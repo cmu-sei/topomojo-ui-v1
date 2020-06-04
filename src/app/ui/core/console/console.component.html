@@ -1,14 +1,15 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div class="console-wrapper">
+
   <mat-drawer-container>
 
     <mat-drawer-content>
 
       <div #consoleCanvas id="console-canvas-" class="canvas" [class.mock-console-connected]="showMockConnected()">
 
-        <button *ngIf="isConnected()" class="tool-btn overlay overlay-tr cog" (click)="toggleDrawer()" mat-button>
+        <button *ngIf="isConnected() && showCog" class="tool-btn overlay overlay-tr cog" (click)="toggleDrawer()" mat-button>
           <mat-icon>settings</mat-icon>
         </button>
 
@@ -18,31 +19,36 @@
           mat-raised-button matTooltip="Retry">
           <mat-icon inline="true">{{stateIcon}}</mat-icon>
         </button>
+
       </div>
+
     </mat-drawer-content>
 
     <mat-drawer #drawer position="end" disableClose="false">
+
       <div class="tools">
+
         <button *ngIf="isConnected()" (click)="toggleDrawer()" mat-button>
           <mat-icon>settings</mat-icon>
         </button>
-
-
-
-
-        <!-- <button (click)="console.dispose()" mat-raised-button>
-          <mat-icon>remove_cirle</mat-icon>
-        </button>
-        <button (click)="console.disconnect()" mat-raised-button>
-          <mat-icon>power_settings_new</mat-icon>
-        </button> -->
 
         <mat-accordion>
           <mat-expansion-panel expanded="true">
             <mat-expansion-panel-header>
               <mat-panel-title>Control</mat-panel-title>
             </mat-expansion-panel-header>
+
             <topomojo-confirm-button (confirmed)="console.sendCAD()" icon="keyboard" text="Ctrl-Alt-Del" color="accent"></topomojo-confirm-button>
+
+            <p><small>
+              If the "Settings" button is in the way, remove it here.  You can still
+              open the settings panel by moving the mouse to the top or left edge of
+              the console.
+            </small></p>
+
+            <mat-slide-toggle name="showCog" [(ngModel)]="showCog"
+              labelPosition="before">Show settings button on console</mat-slide-toggle>
+
           </mat-expansion-panel>
 
           <mat-expansion-panel>
@@ -85,7 +91,7 @@
             <mat-expansion-panel-header>
               <mat-panel-title>Upload ISO</mat-panel-title>
             </mat-expansion-panel-header>
-            <topomojo-file-uploader [bucketId]="info.workspaceId"></topomojo-file-uploader>
+            <topomojo-file-uploader [bucketId]="info.isolationId"></topomojo-file-uploader>
           </mat-expansion-panel>
 
           <mat-expansion-panel>
@@ -100,5 +106,7 @@
       </div>
 
     </mat-drawer>
+
   </mat-drawer-container>
+
 </div>

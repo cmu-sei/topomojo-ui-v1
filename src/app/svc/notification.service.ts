@@ -1,12 +1,13 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Injectable } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { HubConnection, HubConnectionBuilder, LogLevel, HttpTransportType } from '@microsoft/signalr';
 import { AuthService, AuthTokenState } from './auth.service';
 import { Observable, Subject, BehaviorSubject } from 'rxjs';
 import { SettingsService } from './settings.service';
 import { UserService } from './user.service';
-import { Profile } from '../api/gen/models';
+import { UserProfile } from '../api/gen/models';
 
 @Injectable()
 export class NotificationService {
@@ -18,12 +19,12 @@ export class NotificationService {
     ) {
         this.initTokenRefresh();
         this.userSvc.profile$.subscribe(
-            (p: Profile) => {
+            (p: UserProfile) => {
                 this.profile = p;
             }
         );
     }
-    private profile: Profile;
+    private profile: UserProfile;
     private key: string;
     private debug = false;
     private connected = false;
@@ -85,10 +86,21 @@ export class NotificationService {
         }
     }
 
-    start(key: string): Promise<boolean> {
+    start (key: string): void {
+        this.userSvc.getTicket().subscribe(model => {
+            this._start(key, model.ticket);
+        });
+    }
+
+    private _start(key: string, ticket: string): Promise<boolean> {
         this.key = key;
+
         this.connection = new HubConnectionBuilder()
-            .withUrl(`${this.settingSvc.settings.urls.apiUrl}/hub`, { accessTokenFactory: () => this.authSvc.access_token() })
+            .withUrl(`${this.settingSvc.settings.urls.apiUrl}/hub`, {
+                accessTokenFactory: () => ticket,
+                transport: HttpTransportType.WebSockets,
+                skipNegotiation: true
+            })
             .configureLogging(LogLevel.Warning)
             .build();
 

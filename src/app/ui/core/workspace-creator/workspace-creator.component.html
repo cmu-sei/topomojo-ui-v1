@@ -1,21 +1,21 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div class="form">
   <div class="title">
     <mat-form-field>
-      <input matInput required type="text" matLabel="New Workplace" placeholder="Name" [(ngModel)]="name" maxlength="100">
+      <input matInput required type="text" matLabel="New Workplace" placeholder="Name" [(ngModel)]="name" maxlength="64">
       <!-- <mat-hint>You can change this later</mat-hint> -->
       <!-- <mat-hint *ngIf="formErrors.name" align="start"><span class="text-danger">{{ formErrors.name }}</span></mat-hint> -->
-      <mat-hint align="end">{{name.length}} / 100</mat-hint>
+      <mat-hint align="end">{{name.length}} / 64</mat-hint>
     </mat-form-field>
   </div>
 
   <div class="desc">
     <mat-form-field>
-      <textarea matInput type="textarea" placeholder="Description" [(ngModel)]="description" maxlength="300"></textarea>
+      <textarea matInput type="textarea" placeholder="Description" [(ngModel)]="description" maxlength="255"></textarea>
       <mat-hint>You can change this later</mat-hint>
-      <mat-hint align="end">{{description.length}} / 300</mat-hint>
+      <mat-hint align="end">{{description.length}} / 255</mat-hint>
     </mat-form-field>
   </div>
 

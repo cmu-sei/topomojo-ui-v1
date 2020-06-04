@@ -1,12 +1,12 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit, Input, AfterViewInit, ViewChild, OnChanges, SimpleChange, SimpleChanges } from '@angular/core';
-import { Template, ChangedTemplate, Workspace } from '../../../api/gen/models';
+
+import { Component, OnInit, Input, AfterViewInit, ViewChild } from '@angular/core';
+import { Template, ChangedTemplate } from '../../../api/gen/models';
 import { NgForm } from '@angular/forms';
-import { debounceTime } from 'rxjs/operators';
 import { TemplateService } from '../../../api/template.service';
 import { IsoDataSource, IsoFile } from '../../datasources';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 
 @Component({
   selector: 'topomojo-template-settings',
@@ -16,7 +16,6 @@ import { TopologyService } from '../../../api/topology.service';
 export class TemplateSettingsComponent implements OnInit, AfterViewInit {
   @Input() template: Template;
   @Input() hasVm = false;
-  // @Input() workspaceId: string;
   @ViewChild(NgForm) form: NgForm;
   isoSource: IsoDataSource;
   isoDirty = false;
@@ -24,29 +23,21 @@ export class TemplateSettingsComponent implements OnInit, AfterViewInit {
 
   constructor(
     private service: TemplateService,
-    private topologySvc: TopologyService
-  ) { }
+    private topologySvc: WorkspaceService
+  ) {
+  }
 
   ngOnInit() {
-    this.isoSource = new IsoDataSource(this.topologySvc, this.template.topologyGlobalId);
+    this.isoSource = new IsoDataSource(this.topologySvc, this.template.workspaceGlobalId);
   }
 
   ngAfterViewInit() {
-    // this.form.valueChanges.pipe(debounceTime(1000)).subscribe(
-    //   (model) => {
-    //     if (this.form.valid && this.form.touched && model.id) {
-    //       // this.service.putTemplate(model as ChangedTemplate).subscribe(
-    //       //   // TODO: animate feedback
-    //       // );
-    //     }
-    //   }
-    // );
   }
 
   update(form: NgForm) {
     if (this.form.valid && this.form.value.id) {
-      this.service.putTemplate(this.form.value as ChangedTemplate).subscribe(
-        (t) => {
+      this.service.update(this.form.value as ChangedTemplate).subscribe(
+        () => {
           this.form.reset(this.form.value);
           this.isoDirty = false;
         }

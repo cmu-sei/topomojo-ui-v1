@@ -1,12 +1,13 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit, Input, Inject, OnDestroy, ViewChild } from '@angular/core';
+
+import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Converter } from 'showdown/dist/showdown';
 import { DocumentService } from '../../../api/document.service';
 import { SettingsService } from '../../../svc/settings.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { catchError, finalize } from 'rxjs/operators';
-import { of, interval, timer, Observable, Subscription } from 'rxjs';
+import { of, interval, Observable, Subscription } from 'rxjs';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
 
@@ -24,41 +25,12 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   dirty: boolean;
   showImageDiv: boolean;
   markdown = '';
-  private saveInterval$: Observable<number>;
   private saveInterval: Subscription;
-  example = `
-# Title
-#### Subtitle
-
-This is an introductory paragraph.
-*Probably* important!
-
-0. Do some task.
-0. Do another task.
-
-> Block quote formatting
-
-Inline \`code formatting\` example.
-
-    prompt> cat hello world | base64 > encoded.txt
-
-or
-\`\`\`
-main() : void {
-    console.log("hello, world");
-}
-\`\`\`
-
-Normal markdown image linking works using \`![caption](url)\`.
-If you need to store graphics, use the image manager to upload,
-then paste in the MD text.
-`;
 
   constructor(
     private service: DocumentService,
     private settingsSvc: SettingsService,
     private route: ActivatedRoute,
-    private router: Router,
     private toolbar: ToolbarService
   ) {
     this.converter = new Converter(settingsSvc.settings.showdown);
@@ -69,7 +41,6 @@ then paste in the MD text.
     setTimeout(() => this.initToolbar(), 1);
 
     this.id = this.route.snapshot.params['key'];
-    // this.router.navigate([{ outlets: { sidenav: ['images', this.id]}}]);
 
     this.service.getDocument(this.id).pipe(
       catchError(err => of('# Document Title')),
@@ -83,14 +54,12 @@ then paste in the MD text.
 
   ngOnDestroy() {
     this.toolbar.reset();
-    // this.router.navigate([{ outlets: { sidenav: null}}]);
 
     if (this.saveInterval) { this.saveInterval.unsubscribe(); }
   }
 
   reRender() {
     if (!this.dirty) {
-      // this.toolbar.buttons[0].color = 'accent';
       if (!this.saveInterval) {
         this.saveInterval = interval(30000).subscribe(() => this.save());
       }
@@ -105,12 +74,9 @@ then paste in the MD text.
 
   save() {
     if (this.dirty) {
-      // this.toolbar.buttons[0].color = 'default';
-      // this.dirty = false;
-      this.service.putDocument(this.id, this.markdown)
+      this.service.updateDocument(this.id, this.markdown)
         .subscribe(result => {
           this.dirty = false;
-        // this.toolbar.buttons[0].color = 'default';
         });
     }
   }

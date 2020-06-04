@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div class="filters">
@@ -8,36 +8,48 @@
   </mat-button-toggle-group>
 </div>
 
-<mat-card *ngFor="let topo of topos; trackBy: trackById" class="card">
+<mat-card *ngFor="let workspace of workspaces; trackBy: trackById" class="card">
+
   <div class="detail">
-    <div>{{topo.name}}
-      <mat-icon *ngIf="topo.isPublished">public</mat-icon>
+    <div>{{workspace.name}}
+      <mat-icon *ngIf="workspace.isPublished">public</mat-icon>
     </div>
-    <div class="mat-caption">{{topo.globalId}}</div>
-    <div class="mat-caption">{{ topo.whenCreated | ago }} on {{ topo.whenCreated | shortdate }} by {{workers(topo)}}</div>
-    <div *ngIf="current===topo.id">
+
+    <div class="mat-caption">{{workspace.globalId}}</div>
+    <div class="mat-caption">{{ workspace.whenCreated | ago }} on {{ workspace.whenCreated | shortdate }} by {{workspace.author}}</div>
+
+    <div *ngIf="current===workspace.id">
       <div>
-        <button mat-icon-button (click)="changeLimit(topo, -1)" matTooltip="decrement"><mat-icon>remove</mat-icon></button>
-        <span>Template Limit: {{topo.templateLimit}}</span>
-        <button mat-icon-button (click)="changeLimit(topo, 1)" matTooltip="increment"><mat-icon>add</mat-icon></button>
+        <button mat-icon-button (click)="changeLimit(workspace, -1)" matTooltip="decrement"><mat-icon>remove</mat-icon></button>
+        <span>Template Limit: {{workspace.templateLimit}}</span>
+        <button mat-icon-button (click)="changeLimit(workspace, 1)" matTooltip="increment"><mat-icon>add</mat-icon></button>
       </div>
-      <mat-divider inset="true"></mat-divider>
-      <div *ngFor="let t of topo.templates" class="vm">
+
+      <mat-divider  inset="true"></mat-divider>
+
+      <div *ngFor="let t of workspace.templates" class="vm">
         <div class="name">{{t.name}}</div>
         <topomojo-vm-controller [template]="t"></topomojo-vm-controller>
       </div>
+
     </div>
   </div>
+
   <div class="actions">
-    <button matTooltip="View" (click)="select(topo)" mat-mini-fab>
+
+    <button matTooltip="View" (click)="select(workspace)" mat-mini-fab>
       <mat-icon>tv</mat-icon>
     </button>
-    <a matTooltip="Navigate" [routerLink]="['/topo', topo.id]" mat-mini-fab>
+
+    <a matTooltip="Navigate" [routerLink]="['/topo', workspace.id, workspace.slug]" mat-mini-fab>
       <mat-icon>build</mat-icon>
     </a>
-    <topomojo-confirm-button (confirmed)="delete(topo)" fab="true"></topomojo-confirm-button>
+
+    <topomojo-confirm-button (confirmed)="delete(workspace)" fab="true"></topomojo-confirm-button>
   </div>
+
 </mat-card>
+
 <div *ngIf="hasMore" class="center">
   <button (click)="more()" mat-button color="primary"><mat-icon>search</mat-icon>More</button>
 </div>

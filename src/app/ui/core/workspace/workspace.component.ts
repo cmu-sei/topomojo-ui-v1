@@ -1,18 +1,18 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Workspace, Template, TemplateSummary } from '../../../api/gen/models';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 import { NotificationService } from '../../../svc/notification.service';
 import { SettingsService } from '../../../svc/settings.service';
 import { Subscription } from 'rxjs';
 import { ToolbarService, NavbarButton } from '../../svc/toolbar.service';
-import { MatDrawer, MatSidenav } from '@angular/material/sidenav';
 import { TemplateService } from '../../../api/template.service';
 import { ExpiringDialogComponent } from '../../shared/expiring-dialog/expiring-dialog.component';
 import { MatDialogRef, MatDialog } from '@angular/material/dialog';
-import { VmControllerComponent } from '../../shared/vm-controller/vm-controller.component';
+import { ProfileService } from 'src/app/api/profile.service';
 
 @Component({
   templateUrl: './workspace.component.html',
@@ -20,12 +20,16 @@ import { VmControllerComponent } from '../../shared/vm-controller/vm-controller.
 })
 export class WorkspaceComponent implements OnInit, OnDestroy {
 
-  id: number;
+  id: string;
   workspace: Workspace;
   gameCount = 0;
   private subs: Subscription[] = [];
   errors: any[] = [];
   settingsOpened = false;
+  deletingGames = false;
+  selectorOpened = false;
+  uploaderOpened = false;
+  docOpened = false;
   collabButton: NavbarButton = {
     icon: 'group',
     description: 'Collaborate',
@@ -36,7 +40,8 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private route: ActivatedRoute,
-    private service: TopologyService,
+    private profileSvc: ProfileService,
+    private service: WorkspaceService,
     private templateSvc: TemplateService,
     private notifier: NotificationService,
     private settingsSvc: SettingsService,
@@ -46,12 +51,12 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
 
-    this.id = +this.route.snapshot.paramMap.get('id');
+    this.id = this.route.snapshot.paramMap.get('id');
 
     this.toolbar.addButtons([ this.collabButton ]);
     // setTimeout(() => this.toolbar.sideComponent = 'chat', 1);
 
-    this.service.getWorkspace(this.id).subscribe(
+    this.service.load(this.id).subscribe(
       (result: Workspace) => {
           this.workspace = result;
           // this.router.navigate([{ outlets: { sidenav: ['chat', this.workspace.globalId]}}]);
@@ -116,7 +121,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
     );
 
     this.loadWorkers().then(() => {
-      this.notifier.start(this.workspace.globalId);
+        this.notifier.start(this.workspace.globalId);
     });
   }
 
@@ -136,9 +141,9 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   }
 
   templateAdded(template: TemplateSummary) {
-    this.templateSvc.postTemplateLink({
+    this.templateSvc.link({
       templateId: template.id,
-      topologyId: this.workspace.id
+      workspaceId: this.workspace.id
     })
     .subscribe(
         (t: Template) => { this.workspace.templates.push(t); },
@@ -168,7 +173,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   }
 
   deleted() {
-    this.service.deleteWorkspace(this.workspace.id).subscribe(
+    this.service.delete(this.workspace.id).subscribe(
       (r: boolean) => {
         this.router.navigate(['/topo']);
       }
@@ -176,7 +181,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   }
 
   deleteGamespaces() {
-    this.service.deleteTopoloyGames(this.workspace.id).subscribe(
+    this.service.deleteWorkspaceGames(this.workspace.id).subscribe(
       (result) => {
           if (result) {
               this.workspace.gamespaceCount = 0;

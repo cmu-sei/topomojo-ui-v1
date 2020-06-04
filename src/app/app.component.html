@@ -1,20 +1,20 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
-<!-- <div [class.alt-theme]="altTheme"> -->
-    <mat-sidenav-container>
-        <mat-sidenav-content>
-            <topomojo-navbar></topomojo-navbar>
-            <div class="main-content">
-                <router-outlet></router-outlet>
-            </div>
-        </mat-sidenav-content>
-        <mat-sidenav position="end" mode="side">
-            <topomojo-navbar sidenav="true"></topomojo-navbar>
-            <div class="side-content">
-                <router-outlet name="sidenav"></router-outlet>
-            </div>
-        </mat-sidenav>
-        <!-- <input matInput type="text"> -->
-    </mat-sidenav-container>
-<!-- </div> -->
+<mat-sidenav-container>
+
+  <mat-sidenav-content>
+    <topomojo-navbar></topomojo-navbar>
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+
+  <mat-sidenav position="end" mode="side">
+    <topomojo-navbar sidenav="true"></topomojo-navbar>
+    <div class="side-content">
+      <router-outlet name="sidenav"></router-outlet>
+    </div>
+  </mat-sidenav>
+
+</mat-sidenav-container>
