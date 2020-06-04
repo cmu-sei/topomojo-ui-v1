@@ -17,8 +17,8 @@ export class GeneratedVmService extends GeneratedService {
     protected api: ApiSettings
   ) { super(http, api); }
 
-  public list(tag: string): Observable<Array<Vm>> {
-    return this.http.get<Array<Vm>>(this.api.url + '/api/vms' + this.paramify({ tag: tag }));
+  public list(filter: string): Observable<Array<Vm>> {
+    return this.http.get<Array<Vm>>(this.api.url + '/api/vms' + this.paramify({ filter: filter }));
   }
   public load(id: string): Observable<Vm> {
     return this.http.get<Vm>(this.api.url + '/api/vm/' + id);

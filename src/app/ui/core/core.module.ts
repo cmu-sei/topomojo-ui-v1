@@ -102,16 +102,16 @@ const mats = [
       { path: 'oidc-silent', component: OidcSilentComponent },
       { path: 'invitation/:code', component: EnlistComponent, canActivate: [AuthGuard] },
       { path: 'topo', children: [
+        { path: 'doc/:key', children: [
+          { path: '', component: DocumentImageManagerComponent, outlet: 'sidenav' },
+          { path: '', component: DocumentEditorComponent }
+        ]},
         { path: ':id', canActivate: [AuthGuard], children: [
           { path: ':slug', component: WorkspaceComponent, children: [
             { path: '', component: ChatPanelComponent, outlet: 'sidenav' }
           ]},
           { path: '', component: WorkspaceComponent},
           { path: '', component: ChatPanelComponent, outlet: 'sidenav' },
-        ]},
-        { path: 'doc/:key', children: [
-            { path: '', component: DocumentImageManagerComponent, outlet: 'sidenav' },
-            { path: '', component: DocumentEditorComponent }
         ]},
         { path: '', component: WorkspaceLobbyComponent }
       ]},
