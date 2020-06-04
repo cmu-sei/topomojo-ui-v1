@@ -3,7 +3,7 @@
 
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { WorkspaceService } from '../../../api/workspace.service';
-import { Workspace, Search } from '../../../api/gen/models';
+import { Workspace, Search, WorkspaceSummary } from '../../../api/gen/models';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -15,15 +15,15 @@ import { debounceTime } from 'rxjs/operators';
 })
 export class WorkspacesComponent implements OnInit, OnDestroy {
 
-  current = 0;
-  workspaces: Array<Workspace> = [];
+  current: Workspace;
+  workspaces: Array<WorkspaceSummary> = [];
   search: Search = {take: 20};
   hasMore = false;
   subs: Array<Subscription> = [];
   changedWorkspace = new Subject<Workspace>();
   changedWorkspace$ = this.changedWorkspace.asObservable();
   constructor(
-    private topoSvc: WorkspaceService,
+    private workspaceSvc: WorkspaceService,
     private toolbar: ToolbarService
   ) { }
 
@@ -38,8 +38,8 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
       this.changedWorkspace$.pipe(
         debounceTime(500)
-      ).subscribe((topo) => {
-        this.topoSvc.update(topo).subscribe();
+      ).subscribe((workspace) => {
+        this.workspaceSvc.update(workspace).subscribe();
       })
     );
     this.toolbar.search(true);
@@ -57,8 +57,8 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
   }
 
   more() {
-    this.topoSvc.list(this.search).subscribe(
-      (data: Workspace[]) => {
+    this.workspaceSvc.list(this.search).subscribe(
+      (data: WorkspaceSummary[]) => {
         this.workspaces.push(...data);
         this.search.skip += data.length;
         this.hasMore = data.length === this.search.take;
@@ -71,14 +71,20 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     this.fetch();
   }
 
-  select(topo: Workspace) {
-    this.current = (this.current !== topo.id) ? topo.id : 0;
+  select(workspace: WorkspaceSummary) {
+    if (this.current?.id !== workspace.id) {
+      this.workspaceSvc.load(workspace.globalId).subscribe(
+        w => this.current = w
+      );
+    } else {
+      this.current = null;
+    }
   }
 
-  delete(topo: Workspace) {
-    this.topoSvc.delete(topo.id).subscribe(
+  delete(workspace: WorkspaceSummary) {
+    this.workspaceSvc.delete(workspace.id).subscribe(
       () => {
-        this.workspaces.splice(this.workspaces.indexOf(topo), 1);
+        this.workspaces.splice(this.workspaces.indexOf(workspace), 1);
       }
     );
   }
@@ -87,8 +93,8 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
     return item.id;
   }
 
-  changeLimit(topo: Workspace, count: number) {
-    topo.templateLimit += count;
-    this.changedWorkspace.next(topo);
+  changeLimit(count: number) {
+    this.current.templateLimit += count;
+    this.changedWorkspace.next(this.current);
   }
 }
