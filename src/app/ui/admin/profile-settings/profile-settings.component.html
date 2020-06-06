@@ -21,7 +21,12 @@
     </div>
 
     <div>
-      <mat-slide-toggle name="isAdmin" [(ngModel)]="profile.isAdmin" color="primary" labelPosition="before" [ngModelOptions]="{updateOn: 'change'}">Admin</mat-slide-toggle>
+      <mat-radio-group name="role" [(ngModel)]="profile.role" >
+        <mat-radio-button name="role" value="user">User</mat-radio-button>
+        <mat-radio-button name="role" value="builder">Builder</mat-radio-button>
+        <mat-radio-button name="role" value="creator">Creator</mat-radio-button>
+        <mat-radio-button name="role" value="administrator">Administrator</mat-radio-button>
+      </mat-radio-group>
     </div>
 
     <div class="submit">

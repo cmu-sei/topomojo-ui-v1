@@ -27,6 +27,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { ProfileSettingsComponent } from './profile-settings/profile-settings.component';
 import { TemplateCreatorComponent } from './template-creator/template-creator.component';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { MatRadioModule } from '@angular/material/radio';
 
 @NgModule({
   imports: [
@@ -38,6 +39,7 @@ import { DashboardComponent } from './dashboard/dashboard.component';
     MatIconModule,
     MatButtonModule,
     MatButtonToggleModule,
+    MatRadioModule,
     MatDividerModule,
     MatInputModule,
     MatSlideToggleModule,
