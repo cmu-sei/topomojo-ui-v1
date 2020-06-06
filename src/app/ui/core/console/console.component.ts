@@ -86,7 +86,6 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   changeState(state: string): void {
-    console.log(state);
     this.state = state;
     this.shadowState(state);
     this.drawer.close();
@@ -181,33 +180,33 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isoSelected(iso: IsoFile) {
-    this.reconfigureFeedback('pending');
+    this.reconfigureFeedback('pending', '');
     this.vmSvc.updateConfig(this.info.id, { key: 'iso', value: iso.path })
     .subscribe(
       () => {
-        this.reconfigureFeedback('success');
+        this.reconfigureFeedback('success', '');
       },
-      () => this.reconfigureFeedback('fail')
+      (err) => this.reconfigureFeedback('fail', err.error?.message || err.message)
     );
   }
 
   netSelected(net: IsoFile) {
-    this.reconfigureFeedback('pending');
+    this.reconfigureFeedback('pending', '');
     this.vmSvc.updateConfig(this.info.id, { key: 'net', value: net.path })
     .subscribe(
       () => {
-        this.reconfigureFeedback('success');
+        this.reconfigureFeedback('success', '');
       },
-      () => this.reconfigureFeedback('fail')
+      (err) => this.reconfigureFeedback('fail', err.error?.message || err.message)
     );
 
   }
 
-  reconfigureFeedback(msg: string) {
-    this.feedbackState = msg;
-    this.feedback = `Configuration: ${msg}.`;
+  reconfigureFeedback(state: string, msg: string) {
+    this.feedbackState = state;
+    this.feedback = `Configuration: ${msg || state}.`;
     if (msg !== 'pending') {
-      timer(3000).subscribe(() => { console.log('timer'); this.feedback = ''; });
+      timer(3000).subscribe(() => { this.feedback = ''; });
     }
   }
 
