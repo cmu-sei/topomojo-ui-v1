@@ -22,6 +22,7 @@ import { VmControllerComponent } from './vm-controller/vm-controller.component';
 import { VmQuestionComponent } from './vm-question/vm-question.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { SpacesPipe } from './directives/spaces.pipe';
 
 const mats = [
   MatIconModule,
@@ -45,7 +46,8 @@ const shared = [
   SelectTableComponent,
   FileUploaderComponent,
   VmControllerComponent,
-  VmQuestionComponent
+  VmQuestionComponent,
+  SpacesPipe
 ];
 
 @NgModule({
@@ -54,7 +56,7 @@ const shared = [
     FormsModule,
     ...mats
   ],
-  declarations: [...shared],
+  declarations: [...shared, SpacesPipe],
   exports: [
     CommonModule,
     ...shared
