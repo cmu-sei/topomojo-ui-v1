@@ -16,5 +16,4 @@ $ npm start
 ## Roadmap
 
 * Improve the document editor
-* Support guestinfo settings
-* Finish the Admin Dashboard
+* Improve the Admin Dashboard
