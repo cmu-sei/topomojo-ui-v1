@@ -255,7 +255,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
           }
         }),
         map((e: MouseEvent) => {
-          return this.isConnected() && (e.clientX > this.hotspot.x || e.clientY < this.hotspot.h);
+          return this.isConnected() && e.clientX > this.hotspot.x;
         }),
         distinctUntilChanged()
       ).subscribe((hot: boolean) => {
