@@ -196,7 +196,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   }
 
   atLimit(): boolean {
-    return this.workspace.templates.length >= this.workspace.templateLimit;
+    return this.workspace.templateLimit && this.workspace.templates.length >= this.workspace.templateLimit;
   }
 
   trackById(i: number, item: Template): number {
