@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div *ngIf="template" class="outer">
@@ -24,23 +24,32 @@
     <div>
       <mat-form-field>
         <textarea matInput type="textarea" name="description" placeholder="Description" [(ngModel)]="template.description"
-          maxlength="300"></textarea>
-        <mat-hint align="end">{{(''+template.description).length}} / 300</mat-hint>
+          maxlength="255"></textarea>
+        <mat-hint align="end">{{(''+template.description).length}} / 255</mat-hint>
       </mat-form-field>
     </div>
 
     <div>
       <mat-form-field>
-        <input matInput type="text" name="networks" placeholder="Networks" [(ngModel)]="template.networks" maxlength="30">
+        <input matInput type="text" name="networks" placeholder="Networks" [(ngModel)]="template.networks" maxlength="64">
         <mat-hint>Space-delimited network names</mat-hint>
-        <mat-hint align="end">{{(''+template.networks).length}} / 30</mat-hint>
+        <mat-hint align="end">{{(''+template.networks).length}} / 64</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field>
+        <textarea matInput type="textarea" name="guestinfo"
+          placeholder="Custom Settings" autocomplete="false" spellcheck="false"
+          [(ngModel)]="template.guestinfo" maxlength="255"></textarea>
+        <mat-hint>key = value (lines commented with # are ignored)</mat-hint>
+        <mat-hint align="end">{{(''+template.guestinfo).length}} / 255</mat-hint>
       </mat-form-field>
     </div>
 
     <div spellcheck="false">
       <mat-form-field>
         <textarea matInput type="textarea" rows="20" class="json" name="detail" placeholder="Detail" [(ngModel)]="template.detail"></textarea>
-        <mat-error>{{errorMsg}}</mat-error>
       </mat-form-field>
     </div>
 
@@ -49,6 +58,7 @@
     </div>
 
     <topomojo-error-div [errors]="errors"></topomojo-error-div>
+
   </form>
 
 </div>

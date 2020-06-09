@@ -1,8 +1,9 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -19,7 +20,7 @@ export class WorkspaceCreatorComponent implements OnInit {
 
   constructor(
     private router: Router,
-    private workspaceSvc: TopologyService
+    private workspaceSvc: WorkspaceService
   ) { }
 
   ngOnInit() {
@@ -27,16 +28,16 @@ export class WorkspaceCreatorComponent implements OnInit {
 
   clicked(): void {
     if (!!this.name) {
-      this.workspaceSvc.postTopology({
+      this.workspaceSvc.create({
         name: this.name,
         description: this.description
       }).subscribe(
         (ws) => {
-          this.router.navigate(['/topo', ws.id]);
+          this.router.navigate(['/topo', ws.id, ws.slug]);
           this.name = '';
         },
         (err: HttpErrorResponse) => {
-          if (err.error.message.match(/WorkspaceLimitException/)) {
+          if (err.error.message.match(/WorkspaceLimitReachedException/)) {
             err.error.message = 'You have reached the workspace limit and so cannot create one now.';
           }
           this.errors.push(err.error);

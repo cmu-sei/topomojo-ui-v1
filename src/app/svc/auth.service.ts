@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Injectable } from '@angular/core';
 import { UserManager, User, WebStorageStateStore, Log } from 'oidc-client';
 import { BehaviorSubject } from 'rxjs';
@@ -14,6 +15,7 @@ export enum AuthTokenState {
 
 @Injectable()
 export class AuthService {
+
     mgr: UserManager;
     authority: string;
     redirectUrl: string;
@@ -27,17 +29,17 @@ export class AuthService {
         // Log.level = Log.DEBUG;
         // Log.logger = console;
         this.authority = this.settingsSvc.settings.oidc.authority.replace(/https?:\/\//, '');
-        if (!this.settingsSvc.settings.useSessionStorage) {
+        if (this.settingsSvc.settings.useLocalStorage) {
             (<any>this.settingsSvc.settings.oidc.userStore) = new WebStorageStateStore({});
         }
         this.mgr = new UserManager(this.settingsSvc.settings.oidc);
-        this.mgr.events.addUserLoaded(user => { this.onTokenLoaded(user); });
-        this.mgr.events.addUserUnloaded(() => { this.onTokenUnloaded(); });
-        this.mgr.events.addAccessTokenExpiring(e => { this.onTokenExpiring(); });
-        this.mgr.events.addAccessTokenExpired(e => { this.onTokenExpired(); });
-        this.mgr.getUser().then((user) => {
-            this.onTokenLoaded(user);
-        });
+        this.mgr.events.addUserLoaded(user => this.onTokenLoaded(user));
+        this.mgr.events.addUserUnloaded(() => this.onTokenUnloaded());
+        this.mgr.events.addAccessTokenExpiring(e => this.onTokenExpiring());
+        this.mgr.events.addAccessTokenExpired(e => this.onTokenExpired());
+        this.mgr.events.addUserSessionChanged(() => this.onSessionChanged());
+        this.mgr.events.addSilentRenewError(e => this.onRenewError(e));
+        this.mgr.getUser().then(user => this.onTokenLoaded(user));
     }
 
     isAuthenticated(): Promise<boolean> {
@@ -74,11 +76,9 @@ export class AuthService {
 
     private onTokenLoaded(user) {
         this.oidcUser = user;
-        this.tokenState$.next(
-            (user)
-            ? AuthTokenState.valid
-            : AuthTokenState.invalid
-        );
+        if (user) {
+            this.tokenState$.next(AuthTokenState.valid);
+        }
     }
 
     private onTokenUnloaded() {
@@ -90,18 +90,27 @@ export class AuthService {
         if (Date.now() - this.lastCall < 30000) {
             this.silentLogin();
         } else {
-            this.tokenState$.next(AuthTokenState.expiring);
+            if (!this.mgr.settings.automaticSilentRenew) {
+                this.tokenState$.next(AuthTokenState.expiring);
+            }
         }
     }
 
     private onTokenExpired() {
         this.tokenState$.next(AuthTokenState.expired);
 
-        // this.logout();
         // give any clean process 5 seconds or so.
         setTimeout(() => {
-            this.mgr.removeUser();
+            this.expireToken();
         }, 5000);
+    }
+
+    private onSessionChanged() {
+        console.log("sessionChanged");
+    }
+
+    private onRenewError(err) {
+        this.expireToken();
     }
 
     externalLogin(url) {
@@ -127,7 +136,8 @@ export class AuthService {
     }
 
     silentLogin() {
-        this.mgr.signinSilent().then(() => { });
+        this.mgr.signinSilent()
+        .catch(err => this.expireToken());
     }
 
     silentLoginCallback(): void {
@@ -142,10 +152,4 @@ export class AuthService {
         this.mgr.removeUser();
     }
 
-    cleanUrl(url) {
-        return (url || '')
-            .replace(/[?&]auth-hint=[^&]*/, '')
-            .replace(/[?&]contentId=[^&]*/, '')
-            .replace(/[?&]profileId=[^&]*/, '');
-    }
 }

@@ -1,21 +1,37 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div *ngIf="!confirming">
-  <button *ngIf="!fab" (click)="confirming=true" [color]="color" [disabled]="disabled" mat-raised-button>
+
+  <button *ngIf="!fab" (click)="confirming=true" [color]="color"
+    aria-label="initiate action"
+    [disabled]="disabled" mat-raised-button>
     <mat-icon>{{icon}}</mat-icon>
     <span>{{text}}</span>
   </button>
-  <button *ngIf="fab" (click)="confirming=true" [color]="color" [disabled]="disabled" [matTooltip]="text" mat-mini-fab>
+
+  <button *ngIf="fab" (click)="confirming=true" [color]="color"
+    aria-label="initiate action"
+    [disabled]="disabled" [matTooltip]="text" mat-mini-fab>
     <mat-icon>{{icon}}</mat-icon>
   </button>
+
 </div>
+
 <div *ngIf="confirming">
+
   <span>Confirm?</span>
-  <button (click)="confirm()" [color]="color" mat-icon-button>
+
+  <button (click)="confirm()" [color]="color"
+    aria-label="confirm action"
+    mat-icon-button>
     <mat-icon>{{icon}}</mat-icon>
   </button>
-  <button (click)="confirming=false" mat-icon-button>
+
+  <button (click)="confirming=false"
+    aria-label="cancel action"
+    mat-icon-button>
     <mat-icon>cancel</mat-icon>
   </button>
+
 </div>

@@ -1,7 +1,8 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Search, Profile, ProfileSearchResult } from '../../../api/gen/models';
+import { Search, UserProfile } from '../../../api/gen/models';
 import { Subscription } from 'rxjs';
 import { ProfileService } from '../../../api/profile.service';
 import { ToolbarService } from '../../svc/toolbar.service';
@@ -16,7 +17,7 @@ export class PeopleComponent implements OnInit, OnDestroy {
   hasMore = false;
   current = 0;
   subs: Array<Subscription> = [];
-  people: Array<Profile> = [];
+  people: Array<UserProfile> = [];
 
   constructor(
     private profileSvc: ProfileService,
@@ -49,29 +50,29 @@ export class PeopleComponent implements OnInit, OnDestroy {
   }
 
   more() {
-    this.profileSvc.getProfiles(this.search).subscribe(
-      (data: ProfileSearchResult) => {
-        this.people.push(...data.results);
-        this.search.skip += data.results.length;
-        this.hasMore = data.results.length === this.search.take;
+    this.profileSvc.list(this.search).subscribe(
+      (data: UserProfile[]) => {
+        this.people.push(...data);
+        this.search.skip += data.length;
+        this.hasMore = data.length === this.search.take;
       }
     );
   }
 
   filterChanged(e) {
-    this.search.filters = [ e.value ];
+    this.search.filter = [ e.value ];
     this.fetch();
   }
 
-  select(p: Profile) {
+  select(p: UserProfile) {
     this.current = (this.current !== p.id) ? p.id : 0;
   }
 
-  trackById(i: number, item: Profile): number {
+  trackById(i: number, item: UserProfile): number {
     return item.id;
   }
 
-  onDeleted(p: Profile) {
+  onDeleted(p: UserProfile) {
     this.people.splice(this.people.indexOf(p), 1);
   }
 }

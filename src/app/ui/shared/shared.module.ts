@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -21,6 +22,7 @@ import { VmControllerComponent } from './vm-controller/vm-controller.component';
 import { VmQuestionComponent } from './vm-question/vm-question.component';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { SpacesPipe } from './directives/spaces.pipe';
 
 const mats = [
   MatIconModule,
@@ -44,7 +46,8 @@ const shared = [
   SelectTableComponent,
   FileUploaderComponent,
   VmControllerComponent,
-  VmQuestionComponent
+  VmQuestionComponent,
+  SpacesPipe
 ];
 
 @NgModule({
@@ -53,7 +56,7 @@ const shared = [
     FormsModule,
     ...mats
   ],
-  declarations: [...shared],
+  declarations: [...shared, SpacesPipe],
   exports: [
     CommonModule,
     ...shared

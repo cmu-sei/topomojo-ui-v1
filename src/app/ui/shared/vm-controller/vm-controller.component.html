@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div class="toolbar">
@@ -10,40 +10,67 @@
   </div>
 
   <div *ngIf="!vm.task && !confirmingDelete">
-    <button (click)="refresh()" matTooltip="refresh" mat-icon-button><mat-icon>refresh</mat-icon></button>
+
+    <button (click)="refresh()" matTooltip="refresh"
+      aria-label="refresh vm status"
+      mat-icon-button><mat-icon>refresh</mat-icon></button>
+
     <button (click)="initialize()" matTooltip="initialize"
+      aria-label="initialize vm"
       *ngIf="vm.status === 'created'"
       mat-icon-button><mat-icon>settings</mat-icon></button>
+
     <button (click)="deploy()" matTooltip="deploy"
+      aria-label="deploy vm"
       *ngIf="vm.status === 'initialized'"
       mat-icon-button><mat-icon>flash_on</mat-icon></button>
+
     <button (click)="display()" matTooltip="console"
+      aria-label="view vm console"
       *ngIf="vm.id"
       mat-icon-button><mat-icon>tv</mat-icon></button>
+
     <button (click)="vmaction('start')" matTooltip="start"
-      *ngIf="vm.id && vm.state!==1"
+      aria-label="start vm"
+      *ngIf="vm.id && vm.state !== 'running'"
       mat-icon-button><mat-icon>play_arrow</mat-icon></button>
+
     <button (click)="vmaction('stop')" matTooltip="stop"
-      *ngIf="vm.id && vm.state===1"
+      aria-label="stop vm"
+      *ngIf="vm.id && vm.state === 'running'"
       mat-icon-button><mat-icon>stop</mat-icon></button>
+
     <button (click)="vmaction('save')" matTooltip="save"
+      aria-label="save vm"
       *ngIf="canSave()"
       mat-icon-button><mat-icon>save_alt</mat-icon></button>
+
     <button (click)="vmaction('revert')" matTooltip="revert"
+      aria-label="revert vm"
       *ngIf="vm.id"
       mat-icon-button><mat-icon>restore</mat-icon></button>
+
     <button (click)="toggleConfirm()" matTooltip="delete"
+      aria-label="delete vm"
       *ngIf="vm.id"
       mat-icon-button><mat-icon>delete</mat-icon></button>
+
   </div>
 
   <div *ngIf="confirmingDelete">
+
     <span>Confirm?</span>
+
     <button (click)="delete()" matTooltip="confirm"
+      aria-label="confirm delete"
       mat-icon-button><mat-icon>delete</mat-icon></button>
+
     <button (click)="toggleConfirm()" matTooltip="cancel"
+      aria-label="cancel delete"
       mat-icon-button><mat-icon>cancel</mat-icon></button>
+
   </div>
 
   <topomojo-error-div [errors]="errors"></topomojo-error-div>
+
 </div>

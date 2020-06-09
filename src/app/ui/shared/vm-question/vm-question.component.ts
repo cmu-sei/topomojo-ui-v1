@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, Input } from '@angular/core';
 import { VmService } from '../../../api/vm.service';
 import { Vm, VmQuestionChoice, VmQuestion } from '../../../api/gen/models';
@@ -22,7 +23,7 @@ export class VmQuestionComponent implements OnInit {
 
   refresh() {
     this.msg = '';
-    this.vmSvc.getVm(this.id).subscribe(
+    this.vmSvc.load(this.id).subscribe(
       (vm: Vm) => {
         this.vm = vm;
         this.msg = (vm.question) ? vm.question.prompt : 'No question pending.';
@@ -40,8 +41,9 @@ export class VmQuestionComponent implements OnInit {
   label(choice: VmQuestionChoice): string {
     return choice.label + ((choice.key === this.vm.question.defaultChoice) ? ' *' : '');
   }
+
   answer(choice: VmQuestionChoice) {
-    this.vmSvc.postVmAnswer(this.id, {
+    this.vmSvc.answerVmQuestion(this.id, {
       questionId: this.vm.question.id,
       choiceKey: choice.key
     }).subscribe((vm: Vm) => {

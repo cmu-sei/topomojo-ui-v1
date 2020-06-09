@@ -1,8 +1,9 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { TopologyService } from '../../../api/topology.service';
-import { Topology, TopologySearchResult, Search } from '../../../api/gen/models';
+import { WorkspaceService } from '../../../api/workspace.service';
+import { Workspace, Search, WorkspaceSummary } from '../../../api/gen/models';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { Subscription, Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -14,15 +15,15 @@ import { debounceTime } from 'rxjs/operators';
 })
 export class WorkspacesComponent implements OnInit, OnDestroy {
 
-  current = 0;
-  topos: Array<Topology> = [];
-  search: Search = {take: 26};
+  current: Workspace;
+  workspaces: Array<WorkspaceSummary> = [];
+  search: Search = {take: 20};
   hasMore = false;
   subs: Array<Subscription> = [];
-  changedTopo = new Subject<Topology>();
-  changedTopo$ = this.changedTopo.asObservable();
+  changedWorkspace = new Subject<Workspace>();
+  changedWorkspace$ = this.changedWorkspace.asObservable();
   constructor(
-    private topoSvc: TopologyService,
+    private workspaceSvc: WorkspaceService,
     private toolbar: ToolbarService
   ) { }
 
@@ -35,10 +36,10 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
         }
       ),
 
-      this.changedTopo$.pipe(
+      this.changedWorkspace$.pipe(
         debounceTime(500)
-      ).subscribe((topo) => {
-        this.topoSvc.putTopologyPriv(topo).subscribe();
+      ).subscribe((workspace) => {
+        this.workspaceSvc.update(workspace).subscribe();
       })
     );
     this.toolbar.search(true);
@@ -51,47 +52,49 @@ export class WorkspacesComponent implements OnInit, OnDestroy {
 
   fetch() {
     this.search.skip = 0;
-    this.topos = [];
+    this.workspaces = [];
     this.more();
   }
 
   more() {
-    this.topoSvc.getTopologies(this.search).subscribe(
-      (data: TopologySearchResult) => {
-        this.topos.push(...data.results);
-        this.search.skip += data.results.length;
-        this.hasMore = data.results.length === this.search.take;
+    this.workspaceSvc.list(this.search).subscribe(
+      (data: WorkspaceSummary[]) => {
+        this.workspaces.push(...data);
+        this.search.skip += data.length;
+        this.hasMore = data.length === this.search.take;
       }
     );
   }
 
   filterChanged(e) {
-    this.search.filters = [ e.value ];
+    this.search.filter = [ e.value ];
     this.fetch();
   }
 
-  workers(topo: Topology): string {
-    return topo.workers.map(p => p.personName).join();
+  select(workspace: WorkspaceSummary) {
+    if (this.current?.id !== workspace.id) {
+      this.workspaceSvc.load(workspace.id).subscribe(
+        w => this.current = w
+      );
+    } else {
+      this.current = null;
+    }
   }
 
-  select(topo: Topology) {
-    this.current = (this.current !== topo.id) ? topo.id : 0;
-  }
-
-  delete(topo: Topology) {
-    this.topoSvc.deleteTopology(topo.id).subscribe(
+  delete(workspace: WorkspaceSummary) {
+    this.workspaceSvc.delete(workspace.id).subscribe(
       () => {
-        this.topos.splice(this.topos.indexOf(topo), 1);
+        this.workspaces.splice(this.workspaces.indexOf(workspace), 1);
       }
     );
   }
 
-  trackById(i: number, item: Topology): number {
+  trackById(i: number, item: Workspace): number {
     return item.id;
   }
 
-  changeLimit(topo: Topology, count: number) {
-    topo.templateLimit += count;
-    this.changedTopo.next(topo);
+  changeLimit(count: number) {
+    this.current.templateLimit += count;
+    this.changedWorkspace.next(this.current);
   }
 }

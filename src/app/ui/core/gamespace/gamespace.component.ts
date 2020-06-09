@@ -1,12 +1,12 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
 import { Converter } from 'showdown';
 import { GamespaceService } from '../../../api/gamespace.service';
-import { GameState, VmState, Vm, Player, Profile } from '../../../api/gen/models';
+import { GameState, VmState, Vm, Player, UserProfile } from '../../../api/gen/models';
 import { catchError, finalize, debounceTime, distinctUntilChanged } from 'rxjs/operators';
-import { of, pipe, Subscription } from 'rxjs';
+import { of, Subscription, timer } from 'rxjs';
 import { SettingsService } from '../../../svc/settings.service';
 import { UserService } from '../../../svc/user.service';
 import { NotificationService } from '../../../svc/notification.service';
@@ -15,6 +15,7 @@ import { ExpiringDialogComponent } from '../../shared/expiring-dialog/expiring-d
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ToolbarService, NavbarButton } from '../../svc/toolbar.service';
 import { MatChipEvent } from '@angular/material/chips';
+import { ClipboardService } from 'src/app/svc/clipboard.service';
 
 @Component({
   selector: 'topomojo-gamespace',
@@ -29,13 +30,15 @@ export class GamespaceComponent implements OnInit, OnDestroy {
   renderedDoc: string;
   loading = true;
   live = false;
-  private converter: Converter;
+  showSharing = false;
+  inviteUrl = '';
   game: GameState;
   errors: Array<Error> = [];
+  private converter: Converter;
   private subs = new Array<Subscription>();
   private dialogRef: MatDialogRef<ExpiringDialogComponent>;
   private dialogCloseSubscription: Subscription;
-  private profile: Profile = {};
+  private profile: UserProfile = {};
   collabButton: NavbarButton = {
     icon: 'group',
     description: 'Collaborate',
@@ -51,36 +54,36 @@ export class GamespaceComponent implements OnInit, OnDestroy {
     private userSvc: UserService,
     private notifier: NotificationService,
     private dialogSvc: MatDialog,
-    private toolbar: ToolbarService
+    private toolbar: ToolbarService,
+    private clipboard: ClipboardService
   ) {
     this.converter = new Converter(this.settingsSvc.settings.showdown);
   }
 
   ngOnInit() {
+
     this.id = +this.route.snapshot.paramMap.get('id');
-    // this.live = this.route.snapshot.url[this.route.snapshot.url.length].path === 'live';
+
     this.userSvc.profile$.pipe(
       debounceTime(300),
       distinctUntilChanged()
     ).subscribe(
       (profile) => {
         this.profile = profile;
-        const query = (profile.id)
-          ? this.service.getGamespace(this.id)
-          : this.service.getGamespacePreview(this.id);
-
         this.loading = true;
-        query.pipe(
+
+        this.service.load(this.id).pipe(
           finalize(() => this.loading = false)
         ).subscribe(
           (result: GameState) => {
+
             this.game = result;
             this.title = result.name;
             if (profile.id) { this.initGame(result); }
-            if (this.game.topologyDocument.startsWith('http')) {
-              this.dockLink = this.game.topologyDocument;
+            if (this.game.workspaceDocument.startsWith('http')) {
+              this.dockLink = this.game.workspaceDocument;
             } else {
-              this.service.getText(this.settingsSvc.settings.urls.docUrl + result.topologyDocument + '?ts=' + Date.now()).pipe(
+              this.service.getText(this.settingsSvc.settings.urls.docUrl + result.workspaceDocument + '?ts=' + Date.now()).pipe(
                 catchError(err => of('[No document provided]'))
               ).subscribe(
                 (text) => {
@@ -100,9 +103,7 @@ export class GamespaceComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    // this.toolbar.buttons = [];
     this.toolbar.reset();
-    // this.router.navigate([{ outlets: { sidenav: null}}]);
     this.notifier.stop();
     this.subs.forEach(s => s.unsubscribe());
   }
@@ -110,7 +111,7 @@ export class GamespaceComponent implements OnInit, OnDestroy {
   launch() {
     if (this.userSvc.profile.id) {
       this.loading = true;
-      this.service.postGamespaceLaunch(this.id).pipe(
+      this.service.create(this.id).pipe(
         finalize(() => this.loading = false)
       ).subscribe(
             (result) => {
@@ -173,11 +174,9 @@ export class GamespaceComponent implements OnInit, OnDestroy {
         )
     );
 
-    // this.router.navigate([{ outlets: { sidenav: ['chat', this.game.globalId]}}]);
     this.loadPlayers().then(() => {
-      this.notifier.start(this.game.globalId);
-      this.toolbar.addButtons([ this.collabButton ]);
-      // setTimeout(() => this.toolbar.sideComponent = 'chat', 1);
+        this.notifier.start(this.game.globalId);
+        this.toolbar.addButtons([ this.collabButton ]);
     });
   }
 
@@ -214,7 +213,7 @@ export class GamespaceComponent implements OnInit, OnDestroy {
 
   delete() {
     this.loading = true;
-    this.service.deleteGamespace(this.game.id)
+    this.service.delete(this.game.id)
         .subscribe(
             () => {
               this.router.navigate(['/topo']);
@@ -249,8 +248,12 @@ export class GamespaceComponent implements OnInit, OnDestroy {
       );
   }
 
-  shareUrl(): string {
-    return `${this.settingsSvc.hostUrl}/mojo/enlist/${this.game.shareCode}`;
-  }
+  addInviteToClipboard() {
 
+    this.inviteUrl = `${this.settingsSvc.hostUrl}/mojo/enlist/${this.game.shareCode}`;
+
+    this.clipboard.copyToClipboard(this.inviteUrl);
+
+    timer(4000).subscribe(() => this.inviteUrl = '');
+  }
 }

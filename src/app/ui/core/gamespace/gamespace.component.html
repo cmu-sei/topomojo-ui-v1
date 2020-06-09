@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div *ngIf="game" class="wrapper">
@@ -22,25 +22,26 @@
 
   <div *ngIf="game.id && canManage()">
     <div *ngIf="showSharing" class="team">
-        <!-- <div>Collaboration</div> -->
+
         <label>Members</label>
         <div class="tool">
-          <!-- <button (click)="generateNewShareUrl()"
-            matTooltip="New Invitation"
-            mat-icon-button>
-            <mat-icon>refresh</mat-icon>
-          </button> -->
-          <!-- <span>Generate New Url</span> -->
 
-          <a href={{shareUrl()}} mat-icon-button matTooltip="Right-Click to Copy Link">
-            <mat-icon>share</mat-icon>
-            <!-- <span>Invitation Url</span> -->
-          </a>
+          <button (click)="addInviteToClipboard()" mat-raised-button matTooltip="Invitation Url">
+            <mat-icon>share</mat-icon> Invite
+          </button>
+
+          <div>
+            <small *ngIf="inviteUrl">
+              Url on clipboard!
+            </small>
+          </div>
+
         </div>
+
         <mat-chip-list selectable="false">
           <mat-chip *ngFor="let p of game.players"
           disableRipple="true"
-          [removable]="game.canManage"
+          [removable]="notMe(p)"
           (removed)="removeMember($event)"
           [value]="p.id"
           >
@@ -59,6 +60,8 @@
       <mat-icon>description</mat-icon>
       External Document
     </a>
+
     <div *ngIf="renderedDoc" [innerHtml]="renderedDoc"></div>
+
   </div>
 </div>

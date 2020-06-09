@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
 .workspace {
@@ -19,5 +19,12 @@
             width: 70%;
             margin-right: 8px;
         }
+    }
+
+    .note {
+      width: 50%;
+      margin-right: 16px;
+      color: #067;
+      font-size: .85em;
     }
 }

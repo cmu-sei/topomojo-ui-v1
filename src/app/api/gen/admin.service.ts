@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
 import { Injectable } from '@angular/core';
@@ -6,7 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiSettings } from '../api-settings';
 import { GeneratedService } from './_service';
-import { CachedConnection } from './models';
+import { CachedConnection, JanitorReport } from './models';
 
 @Injectable()
 export class GeneratedAdminService extends GeneratedService {
@@ -16,23 +16,22 @@ export class GeneratedAdminService extends GeneratedService {
        protected api: ApiSettings
     ) { super(http, api); }
 
-    public getAdminGetsettings(): Observable<string> {
-        return this.http.get<string>(this.api.url + '/api/admin/getsettings');
+    public loadVersion(): Observable<any> {
+      return this.http.get<any>(this.api.url + '/api/version');
     }
-    public postAdminSavesettings(settings: object): Observable<boolean> {
-        return this.http.post<boolean>(this.api.url + '/api/admin/savesettings', settings);
-    }
-    public postAdminAnnounce(text: string): Observable<boolean> {
+    public createAnnouncement(text: string): Observable<boolean> {
         return this.http.post<boolean>(this.api.url + '/api/admin/announce', text);
     }
-    public postAdminExport(ids: Array<number>): Observable<Array<string>> {
+    public export(ids: Array<number>): Observable<Array<string>> {
         return this.http.post<Array<string>>(this.api.url + '/api/admin/export', {});
     }
-    public getAdminImport(): Observable<Array<string>> {
+    public import(): Observable<Array<string>> {
         return this.http.get<Array<string>>(this.api.url + '/api/admin/import');
     }
-    public getAdminLive(): Observable<Array<CachedConnection>> {
+    public listConnections(): Observable<Array<CachedConnection>> {
         return this.http.get<Array<CachedConnection>>(this.api.url + '/api/admin/live');
     }
-
+    public cleanup(): Observable<JanitorReport[]> {
+      return this.http.post<JanitorReport[]>(this.api.url + '/api/admin/janitor', null);
+    }
 }

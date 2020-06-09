@@ -1,15 +1,15 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import {
-  Component, OnInit, ViewChild, ViewRef, AfterViewInit,
+  Component, OnInit, ViewChild, AfterViewInit,
   ElementRef, Input, Injector, HostListener, OnDestroy
 } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { VmService } from '../../../api/vm.service';
-import { FileService } from '../../../api/file.service';
-import { DisplayInfo, VmOperationTypeEnum } from '../../../api/gen/models';
-import { catchError, debounceTime, map, distinctUntilChanged } from 'rxjs/operators';
-import { throwError as ObservableThrower, of, fromEvent, Observable, Subscription } from 'rxjs';
+import { ConsoleSummary, VmOperationTypeEnum } from '../../../api/gen/models';
+import { catchError, debounceTime, map, distinctUntilChanged, tap } from 'rxjs/operators';
+import { throwError as ObservableThrower, fromEvent, Subscription, timer } from 'rxjs';
 import { Title } from '@angular/platform-browser';
 import { MockConsoleService } from './services/mock-console.service';
 import { WmksConsoleService } from './services/wmks-console.service';
@@ -18,7 +18,7 @@ import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService, AuthTokenState } from '../../../svc/auth.service';
 import { IsoDataSource, IsoFile, VmNetDataSource } from '../../datasources';
-import { TopologyService } from '../../../api/topology.service';
+import { WorkspaceService } from '../../../api/workspace.service';
 
 @Component({
   selector: 'topomojo-console',
@@ -33,7 +33,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input() index = 0;
   @Input() id: string;
-  info: DisplayInfo = {};
+  info: ConsoleSummary = {};
   state = 'loading';
   shadowstate = 'loading';
   shadowTimer: any;
@@ -44,16 +44,19 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(MatDrawer) drawer: MatDrawer;
   @ViewChild('consoleCanvas') consoleCanvas: ElementRef;
   subs: Array<Subscription> = [];
-  private hotspot = { x: 0, y: 0, w: 20, h: 20 };
+  private hotspot = { x: 0, y: 0, w: 8, h: 8 };
   isoSource: IsoDataSource;
   netSource: VmNetDataSource;
+  feedback = '';
+  feedbackState = '';
+  showCog = true;
 
   constructor(
     private injector: Injector,
     private route: ActivatedRoute,
     private titleSvc: Title,
     private vmSvc: VmService,
-    private topologySvc: TopologyService,
+    private topologySvc: WorkspaceService,
     private toolbar: ToolbarService,
     private tokenSvc: AuthService
   ) {
@@ -83,7 +86,6 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   changeState(state: string): void {
-    console.log(state);
     this.state = state;
     this.shadowState(state);
     this.drawer.close();
@@ -132,10 +134,10 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
         })
         ))
       .subscribe(
-        (info: DisplayInfo) => {
-          if (info.topoId !== this.info.topoId) {
-            this.isoSource = new IsoDataSource(this.topologySvc, info.topoId);
-            this.netSource = new VmNetDataSource(this.topologySvc, info.topoId);
+        (info: ConsoleSummary) => {
+          if (info.isolationId !== this.info.isolationId) {
+            this.isoSource = new IsoDataSource(this.topologySvc, info.isolationId);
+            this.netSource = new VmNetDataSource(this.topologySvc, info.isolationId);
           }
           this.info = info;
           this.console = (this.isMock())
@@ -155,7 +157,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
             this.changeState('failed');
           }
         },
-        (err: Error) => {
+        () => {
           // show error
           this.changeState('failed');
         },
@@ -167,7 +169,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   start(): void {
     this.changeState('starting');
-    this.vmSvc.postVmAction({
+    this.vmSvc.updateState({
       id: this.info.id,
       type: VmOperationTypeEnum.start
     }).subscribe(
@@ -178,11 +180,34 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isoSelected(iso: IsoFile) {
-    this.vmSvc.postVmChange(this.info.id, { key: 'iso', value: iso.path }).subscribe();
+    this.reconfigureFeedback('pending', '');
+    this.vmSvc.updateConfig(this.info.id, { key: 'iso', value: iso.path })
+    .subscribe(
+      () => {
+        this.reconfigureFeedback('success', '');
+      },
+      (err) => this.reconfigureFeedback('fail', err.error?.message || err.message)
+    );
   }
 
   netSelected(net: IsoFile) {
-    this.vmSvc.postVmChange(this.info.id, { key: 'net', value: net.path }).subscribe();
+    this.reconfigureFeedback('pending', '');
+    this.vmSvc.updateConfig(this.info.id, { key: 'net', value: net.path })
+    .subscribe(
+      () => {
+        this.reconfigureFeedback('success', '');
+      },
+      (err) => this.reconfigureFeedback('fail', err.error?.message || err.message)
+    );
+
+  }
+
+  reconfigureFeedback(state: string, msg: string) {
+    this.feedbackState = state;
+    this.feedback = `Configuration: ${msg || state}.`;
+    if (msg !== 'pending') {
+      timer(3000).subscribe(() => { this.feedback = ''; });
+    }
   }
 
   shadowState(state: string): void {
@@ -196,7 +221,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   isMock(): boolean {
-    return this.info.conditions && this.info.conditions.match(/mock/) !== null;
+    return this.info.url && this.info.url.match(/mock/) !== null;
   }
 
   showMockConnected(): boolean {
@@ -224,8 +249,13 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subs.push(
       fromEvent(document, 'mousemove').pipe(
         debounceTime(100),
+        tap((e: MouseEvent) => {
+          if (this.drawer.opened && e.clientX < this.hotspot.x - 400) {
+            this.drawer.close();
+          }
+        }),
         map((e: MouseEvent) => {
-          return this.isConnected() && e.clientX > this.hotspot.x && e.clientY < this.hotspot.h;
+          return this.isConnected() && e.clientX > this.hotspot.x;
         }),
         distinctUntilChanged()
       ).subscribe((hot: boolean) => {

@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
 import { Router, ActivatedRoute, NavigationEnd, RouterEvent } from '@angular/router';
 import { AuthService, AuthTokenState } from './svc/auth.service';
@@ -19,7 +20,7 @@ import { SettingsService } from './svc/settings.service';
 export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
   title = 'app';
   altTheme = false;
-  @ViewChild(MatSidenav) sidenav: MatSidenav;
+  @ViewChild(MatSidenav, {static: true}) sidenav: MatSidenav;
   private dialogRef: MatDialogRef<ExpiringDialogComponent>;
   private dialogCloseSubscription: Subscription;
   private tokenState: AuthTokenState = AuthTokenState.invalid;
@@ -37,7 +38,6 @@ export class AppComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit() {
 
-    // this.altTheme = this.settingSvc.localSettings.altTheme;
     this.setTheme(this.settingSvc.localSettings.altTheme);
     this.toolbar.sidenav = this.sidenav;
 

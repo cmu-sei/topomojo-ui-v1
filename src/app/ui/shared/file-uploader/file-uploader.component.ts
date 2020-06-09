@@ -1,6 +1,7 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-import { Component, OnInit, Input, Output } from '@angular/core';
+
+import { Component, OnInit, Input } from '@angular/core';
 import { HttpEventType, HttpResponse } from '@angular/common/http';
 import { FileService } from '../../../api/file.service';
 import { finalize } from 'rxjs/operators';
@@ -72,7 +73,7 @@ export class FileUploaderComponent implements OnInit {
         (event) => {
           if (event.type === HttpEventType.UploadProgress) {
             qf.progress = Math.round(100 * event.loaded / event.total);
-            // TODO: broadcast notifaction to workspace at some interval
+            // TODO: broadcast notification to workspace at some interval
           } else if (event instanceof HttpResponse) {
             // if (!qf.name.match(/.*\.iso/)) { qf.name += '.iso'; }
             qf.progress = 100;

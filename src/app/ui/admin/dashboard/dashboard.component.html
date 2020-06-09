@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div>
@@ -16,30 +16,60 @@
 
 <div>
   <h4>Active Users</h4>
-  <div *ngIf="connections.length === 0" class="list">None</div>
-  <div *ngFor="let c of connections; trackBy:trackById" class="list">{{c.profileName}}</div>
+  <!-- <div *ngIf="connections.length === 0" class="list">None</div> -->
+  <div *ngFor="let c of connections | async; trackBy:trackById" class="list">{{c.profileName}}</div>
 </div>
 
 <mat-divider></mat-divider>
 
 <div>
   <h4>Export (Beta)</h4>
+  <p>
+    Generates an export package at the server for manual relocation to a
+    destination server.
+  </p>
   <div class="input">
     <mat-form-field>
       <input matInput type="text" placeholder="Topo Id list" [(ngModel)]="exportIds">
+      <mat-hint>space delimited list of workspace integer ids</mat-hint>
     </mat-form-field>
     <button mat-raised-button color="primary" (click)="export()" [disabled]="!exportIds.length">
-      <mat-icon>export</mat-icon> Export
+      <mat-icon>import_export</mat-icon> Export
     </button>
   </div>
 </div>
 
 <div>
   <h4>Import (Beta)</h4>
+  <p>
+    Initiate import on the server.  This process expects importable resources
+    to be manually moved onto the server.  Clicking import will import any resources
+    that haven't yet been imported.
+  </p>
   <div class="input">
     <button mat-raised-button color="primary" (click)="import()">
-      <mat-icon>import</mat-icon> Import
+      <mat-icon>import_export</mat-icon> Import
     </button>
-    <p *ngFor="let r of importResult">{{r}}</p>
+    <p *ngFor="let r of importResult | async">{{r}}</p>
   </div>
+</div>
+
+<div>
+  <h4>Janitor</h4>
+  <p>
+    Initiate cleanup on the server.  Cleanup generally runs on a schedule,
+    but can be fired manually here. It uses the settings specified at the
+    api application. (TODO: allow changing settings here.)
+  </p>
+  <div class="input">
+    <button mat-raised-button color="primary" (click)="cleanup()">
+      <mat-icon>delete</mat-icon> Cleanup Report
+    </button>
+  </div>
+  <p *ngFor="let r of janitorResult | async">
+    <span>{{r.reason}}</span>,
+    <!-- <span>{{r.id}}</span>, -->
+    <span>{{r.name}}</span>,
+    <span>{{r.age}}</span>
+  </p>
 </div>

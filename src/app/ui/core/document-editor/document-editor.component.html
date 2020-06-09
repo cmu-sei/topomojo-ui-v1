@@ -1,7 +1,8 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <mat-drawer-container>
+
   <mat-drawer class="editor" position="start" mode="side" opened="true" disableClose="true">
     <textarea matInput
       name="editor"
@@ -9,14 +10,13 @@
       [(ngModel)]="markdown"
       (keyup)="reRender()"></textarea>
   </mat-drawer>
+
   <mat-drawer #imageDrawer class="images" position="end" disableClose="false">
     <p>image drawer</p>
   </mat-drawer>
+
   <mat-drawer-content>
     <div class="markdown" [innerHtml]="rendered"></div>
   </mat-drawer-content>
 
-
 </mat-drawer-container>
-
-

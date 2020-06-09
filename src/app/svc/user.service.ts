@@ -1,16 +1,17 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Injectable } from '@angular/core';
 import { AuthService, AuthTokenState } from './auth.service';
 import { ProfileService } from '../api/profile.service';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { Profile } from '../api/gen/models';
+import { UserProfile } from '../api/gen/models';
 
 @Injectable()
 export class UserService {
     tokenState: AuthTokenState;
-    profile: Profile = {};
-    public profile$: BehaviorSubject<Profile> = new BehaviorSubject<Profile>(this.profile);
+    profile: UserProfile = {};
+    public profile$: BehaviorSubject<UserProfile> = new BehaviorSubject<UserProfile>(this.profile);
 
     constructor(
         private authSvc: AuthService,
@@ -27,8 +28,8 @@ export class UserService {
         this.tokenState = state;
         switch (state) {
             case AuthTokenState.valid:
-                this.getProfile(false).subscribe(
-                    (p: Profile) => {
+                this.getProfile(true).subscribe(
+                    (p: UserProfile) => {
                         this.profile = !!p ? p : {};
                         this.profile$.next(this.profile);
                     }
@@ -42,12 +43,16 @@ export class UserService {
         }
     }
 
-    getProfile(reload?: boolean): Observable<Profile> {
+    getProfile(reload?: boolean): Observable<UserProfile> {
         if (this.profile.id && !reload) {
             return of(this.profile);
         }
 
-        return this.profileSvc.getProfile();
+        return this.profileSvc.load();
+    }
+
+    getTicket(): Observable<any> {
+        return this.profileSvc.ticket();
     }
 
 }

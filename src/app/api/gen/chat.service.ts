@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
 import { Injectable } from '@angular/core';
@@ -16,19 +16,19 @@ export class GeneratedChatService extends GeneratedService {
        protected api: ApiSettings
     ) { super(http, api); }
 
-    public getChats(id: string, marker: number, take: number): Observable<Array<Message>> {
+    public list(id: string, marker: number, take: number): Observable<Array<Message>> {
         return this.http.get<Array<Message>>(this.api.url + '/api/chats/' + id + this.paramify({marker: marker, take: take}));
     }
-    public getChat(id: number): Observable<Message> {
+    public load(id: number): Observable<Message> {
         return this.http.get<Message>(this.api.url + '/api/chat/' + id);
     }
-    public deleteChat(id: number): Observable<any> {
+    public delete(id: number): Observable<any> {
         return this.http.delete<any>(this.api.url + '/api/chat/' + id);
     }
-    public putChat(model: ChangedMessage): Observable<any> {
+    public update(model: ChangedMessage): Observable<any> {
         return this.http.put<any>(this.api.url + '/api/chat', model);
     }
-    public postChat(model: NewMessage): Observable<any> {
+    public create(model: NewMessage): Observable<any> {
         return this.http.post<any>(this.api.url + '/api/chat', model);
     }
 

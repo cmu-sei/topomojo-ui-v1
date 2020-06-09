@@ -1,15 +1,18 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
-<div *ngIf="workspace">
+<div *ngIf="workspace && workspace.canEdit">
+
   <form #form="ngForm" (ngSubmit)="update()" [ngFormOptions]="{updateOn: 'change'}">
     <input type="hidden" name="id" [ngModel]="workspace.id">
+    <input type="hidden" name="templateLimit" [ngModel]="workspace.templateLimit">
+
     <div>
       <mat-form-field>
         <input matInput required type="text" name="name"
           matLabel="New Workplace" placeholder="Name"
-          [(ngModel)]="workspace.name" maxlength="100">
-        <mat-hint align="end">{{workspace.name.length}} / 100</mat-hint>
+          [(ngModel)]="workspace.name" maxlength="64">
+        <mat-hint align="end">{{workspace.name.length}} / 64</mat-hint>
       </mat-form-field>
     </div>
 
@@ -17,8 +20,8 @@
       <mat-form-field>
         <textarea matInput type="textarea" name="description"
           placeholder="Description"
-          [(ngModel)]="workspace.description" maxlength="300"></textarea>
-        <mat-hint align="end">{{(workspace.description+'').length}} / 300</mat-hint>
+          [(ngModel)]="workspace.description" maxlength="255"></textarea>
+        <mat-hint align="end">{{(workspace.description+'').length}} / 255</mat-hint>
       </mat-form-field>
     </div>
 
@@ -26,8 +29,8 @@
       <mat-form-field>
         <input matInput type="text" name="author"
         placeholder="Author"
-        [(ngModel)]="workspace.author" maxlength="50">
-        <mat-hint align="end">{{(workspace.author+'').length}} / 50</mat-hint>
+        [(ngModel)]="workspace.author" maxlength="64">
+        <mat-hint align="end">{{(workspace.author+'').length}} / 64</mat-hint>
       </mat-form-field>
     </div>
 
@@ -35,26 +38,38 @@
       <mat-form-field>
         <input matInput type="text" name="documentUrl"
         placeholder="External Doc Url"
-        [(ngModel)]="workspace.documentUrl" maxlength="100">
+        [(ngModel)]="workspace.documentUrl" maxlength="128">
         <mat-hint>Leave blank if using TopoMojo doc.</mat-hint>
-        <mat-hint align="end">{{(workspace.documentUrl+'').length}} / 100</mat-hint>
+        <mat-hint align="end">{{(workspace.documentUrl || '').length}} / 128</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div>
+      <mat-form-field>
+        <input matInput type="text" name="audience"
+        placeholder="Audience"
+        [(ngModel)]="workspace.audience" maxlength="64">
+        <mat-hint>Publish privately to these clients (space delimit   ).</mat-hint>
+        <mat-hint align="end">{{(workspace.audience+'').length}} / 64</mat-hint>
       </mat-form-field>
     </div>
 
     <div>
       <mat-slide-toggle name="isPublished" [(ngModel)]="workspace.isPublished"
       [ngModelOptions]="{updateOn: 'change'}" color="primary" labelPosition="before">Published</mat-slide-toggle>
+      <br/><small>Toggle public visibility.</small>
     </div>
 
     <div class="submit">
       <button mat-raised-button color="primary" type="submit" [disabled]="!form.dirty || !form.valid">Save Settings</button>
     </div>
+
   </form>
 
   <mat-divider></mat-divider>
 
   <div class="team">
-    <!-- <div>Collaboration</div> -->
+
     <label>Members</label>
     <mat-chip-list selectable="false">
       <mat-chip *ngFor="let w of workspace.workers"
@@ -69,23 +84,28 @@
     </mat-chip-list>
 
     <div class="tool">
-      <button (click)="generateNewShareUrl()"
-        matTooltip="New Invitation"
-        mat-icon-button>
-        <mat-icon>refresh</mat-icon>
-        <!-- <span>Generate New Url</span> -->
-      </button>
 
-      <a href={{shareUrl()}} mat-icon-button matTooltip="Right-Click to Copy Link">
-        <mat-icon>share</mat-icon>
-        <!-- <span>Invitation Url</span> -->
-      </a>
+      <div>
+        <button (click)="newInvitation()" mat-raised-button>
+          <mat-icon>share</mat-icon>Invite
+        </button>
+      </div>
+
+      <div>
+        <small *ngIf="inviteUrl">
+          Url on clipboard!
+        </small>
+      </div>
+
     </div>
+
   </div>
 
   <mat-divider></mat-divider>
+
   <!-- Delete -->
   <div class="quiet-placard">
     <topomojo-confirm-button [disabled]="false" color="warn" icon="delete" text="Delete Workspace" (confirmed)="onDelete()"></topomojo-confirm-button>
   </div>
+
 </div>

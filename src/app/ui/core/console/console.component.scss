@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 :host {
     z-index: 1;
@@ -25,15 +25,21 @@ mat-drawer {
 .overlay {
     position: absolute;
     z-index: 200;
-    text-shadow: 1px 0 16px lightgray;
+    text-shadow: 1px 1px 2px white, 0 0 2em white, 0 0 .2em white;
 }
 .overlay-tr {
-    top: 0px;
-    right: 0px;
+    top: 24px;
+    right: 24px;
 }
 .overlay-tl {
+    top: 24px;
+    left: 24px;
+}
+.overlay-tc {
     top: 0px;
-    left: 0px;
+    left: 50%;
+    margin-right: -50%;
+    transform: translate(-50%, 0);
 }
 
 .overlay-mm {

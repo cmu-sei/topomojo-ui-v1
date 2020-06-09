@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 
 import { Injectable } from '@angular/core';
@@ -16,32 +16,29 @@ export class GeneratedGamespaceService extends GeneratedService {
        protected api: ApiSettings
     ) { super(http, api); }
 
-    public getGamespaces(filter: string): Observable<Array<Gamespace>> {
+    public list(filter: string): Observable<Array<Gamespace>> {
         return this.http.get<Array<Gamespace>>(this.api.url + '/api/gamespaces' + this.paramify({filter: filter}));
     }
-    public getGamespacePreview(id: number): Observable<GameState> {
-        return this.http.get<GameState>(this.api.url + '/api/gamespace/' + id + '/preview');
-    }
-    public getGamespace(id: number): Observable<GameState> {
+    public load(id: number): Observable<GameState> {
         return this.http.get<GameState>(this.api.url + '/api/gamespace/' + id);
     }
-    public deleteGamespace(id: number): Observable<boolean> {
-        return this.http.delete<boolean>(this.api.url + '/api/gamespace/' + id);
+    public delete(id: number): Observable<any> {
+        return this.http.delete<any>(this.api.url + '/api/gamespace/' + id);
     }
-    public postGamespaceLaunch(id: number): Observable<GameState> {
-        return this.http.post<GameState>(this.api.url + '/api/gamespace/' + id + '/launch', {});
+    public create(id: number): Observable<GameState> {
+        return this.http.post<GameState>(this.api.url + '/api/gamespace/' + id, {});
     }
-    public getGamespaceState(id: number): Observable<GameState> {
-        return this.http.get<GameState>(this.api.url + '/api/gamespace/' + id + '/state');
+    public loadState(id: number): Observable<GameState> {
+        return this.http.get<GameState>(this.api.url + '/api/gamestate/' + id);
     }
-    public postPlayerCode(code: string): Observable<boolean> {
-        return this.http.post<boolean>(this.api.url + '/api/player/enlist/' + code, {});
+    public listPlayers(id: number): Observable<Array<Player>> {
+      return this.http.get<Array<Player>>(this.api.url + '/api/players/' + id);
     }
-    public deletePlayer(id: number): Observable<boolean> {
-        return this.http.delete<boolean>(this.api.url + '/api/player/' + id);
+    public createPlayer(code: string): Observable<any> {
+      return this.http.post<any>(this.api.url + '/api/player/' + code, {});
     }
-    public getGamespacePlayers(id: number): Observable<Array<Player>> {
-        return this.http.get<Array<Player>>(this.api.url + '/api/gamespace/' + id + '/players');
+    public deletePlayer(id: number): Observable<any> {
+        return this.http.delete<any>(this.api.url + '/api/player/' + id);
     }
 
 }

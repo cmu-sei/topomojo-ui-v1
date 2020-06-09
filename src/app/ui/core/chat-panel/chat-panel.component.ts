@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, Input, ViewChild, ElementRef, OnChanges, OnDestroy, AfterViewChecked } from '@angular/core';
 import { NotificationService, HubEvent, Actor } from '../../../svc/notification.service';
 import { Message } from '../../../api/gen/models';
@@ -28,25 +29,28 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
   private typingMonitor: any;
   key: string;
   actors: Array<Actor>;
+
   constructor(
     private service: ChatService,
     private notifier: NotificationService
-    // private clipboard: ClipboardService
   ) {
   }
 
   ngOnInit() {
 
     this.subs.push(
+
       this.notifier.key$.subscribe(key => {
         this.key = key;
         this.messages = [];
         this.moreHistory();
       }),
+
       this.notifier.actors$.subscribe(actors => {
         this.actors = actors;
         this.typers = this.actors.filter((a) => a.typing).map((a) => a.name).join();
       }),
+
       this.notifier.chatEvents.subscribe(
         (event: HubEvent) => {
           switch (event.action) {
@@ -60,6 +64,7 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
           }
         }
       ),
+
       this.typing$.pipe(
         distinctUntilChanged()
       ).subscribe(
@@ -87,19 +92,10 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
     const text = this.newMessage;
     this.newMessage = '';
 
-    // this.messages.push({
-    //   text: text,
-    //   authorName: 'me',
-    // });
-
-    this.service.postChat({
+    this.service.create({
       roomId: this.key,
       text: text
     }).subscribe();
-  }
-
-  pasteUrl() {
-    // this.clipboard.copyToClipboard(this.space.shareCode);
   }
 
   ngAfterViewChecked() {
@@ -110,7 +106,7 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
     if (this.key) {
       const take = 25;
       const marker = (this.messages.length) ? this.messages[0].msg.id : 0;
-      this.service.getChats(this.key, marker, take).subscribe(
+      this.service.list(this.key, marker, take).subscribe(
         (result: Message[]) => {
           const currentLast = this.lastMsg;
           this.lastMsg = this.messages.length ? this.messages[0] : { msg: {}, hdr: true, time: '', date: '', utc: 0};
@@ -147,7 +143,7 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
       date: dt.getDate() !== new Date(this.lastMsg.utc).getDate() ? dt.toLocaleDateString('en-US', this.dateFormat) : '',
       utc: utc
     };
-    // if (rm.date) { console.log(rm.date); }
+
     this.lastMsg = rm;
     return rm;
   }

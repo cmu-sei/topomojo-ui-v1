@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, EventEmitter, Output } from '@angular/core';
 import { TemplateService } from '../../../api/template.service';
 import { TemplateDetail } from '../../../api/gen/models';
@@ -21,7 +22,7 @@ export class TemplateCreatorComponent implements OnInit {
   }
 
   clicked() {
-    this.templateSvc.postTemplateDetailed({ name: this.name, networks: 'lan'}).subscribe(
+    this.templateSvc.createDetail({ name: this.name, networks: 'lan'}).subscribe(
       (t: TemplateDetail) => {
         this.created.emit(t);
         this.name = '';

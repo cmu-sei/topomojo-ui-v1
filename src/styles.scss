@@ -1,15 +1,9 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
-/* You can add global styles to this file, and also import other style files */
-// @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
 @import '~@angular/material/theming';
 @import './cmu-tartan.theme';
 @import './app/theming';
-// @import './styles/api';
-// @import './styles/markdown';
-// @import './styles/tables';
-// @import './styles/general';
 
 
 html, body { height: 100%; }
@@ -89,4 +83,13 @@ $alt: cmu-dark-theme($primary, $accent, mat-palette($mat-amber));
 .alt-theme {
     @include angular-material-theme($alt);
     @include mix-app-theme($alt);
+
+    .mat-tooltip {
+      color: white!important;
+    }
+}
+
+
+.mat-tooltip {
+  color: black!important;
 }

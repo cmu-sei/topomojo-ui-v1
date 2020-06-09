@@ -1,4 +1,4 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
 <div class="workspace-lobby">
@@ -6,21 +6,21 @@
   <div class="search-tools">
     <div>
       <mat-button-toggle-group *ngIf="hasProfile" (change)="filterChanged($event)" [value]="filter">
-        <mat-button-toggle value="public" matTooltip="Filter">Public</mat-button-toggle>
-        <mat-button-toggle value="private" matTooltip="Filter">Private</mat-button-toggle>
+        <mat-button-toggle value="public" matTooltip="Show Public Topologies">Public</mat-button-toggle>
+        <mat-button-toggle value="private" matTooltip="Show Private Topologies">Private</mat-button-toggle>
       </mat-button-toggle-group>
     </div>
 
     <div>
       <mat-button-toggle-group (change)="sortChanged($event)" [(ngModel)]="model.sort">
-        <mat-button-toggle value="age" matTooltip="Sort">Newest</mat-button-toggle>
-        <mat-button-toggle value="" matTooltip="Sort">Name</mat-button-toggle>
+        <mat-button-toggle value="age" matTooltip="Sort by Newest">Newest</mat-button-toggle>
+        <mat-button-toggle value="" matTooltip="Sort by Name">Name</mat-button-toggle>
       </mat-button-toggle-group>
     </div>
 
   </div>
 
-  <div *ngIf="showLoginMsg" class="lobby-section">
+  <div *ngIf="list.length > 0 && !hasProfile" class="lobby-section">
     Feel free to preview, but you'll need to login to use the site!
   </div>
 
@@ -40,8 +40,11 @@
     <p *ngIf="none">No workspace found</p>
     <topomojo-workspace-summary *ngFor="let item of list; trackBy: trackById" [summary]="item"></topomojo-workspace-summary>
   </div>
+
   <div *ngIf="hasMore" class="center">
-    <button (click)="fetch()" mat-button color="primary"><mat-icon>search</mat-icon>More</button>
+    <button (click)="fetch()" mat-button color="primary" aria-label="fetch more">
+      <mat-icon>search</mat-icon> More
+    </button>
   </div>
 
 </div>

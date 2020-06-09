@@ -1,8 +1,9 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Component, OnInit, Input } from '@angular/core';
 import { Router } from '@angular/router';
-import { TopologySummary } from '../../../api/gen/models';
+import { WorkspaceSummary } from '../../../api/gen/models';
 
 @Component({
   selector: 'topomojo-workspace-summary',
@@ -11,7 +12,7 @@ import { TopologySummary } from '../../../api/gen/models';
 })
 export class WorkspaceSummaryComponent implements OnInit {
 
-  @Input() summary: TopologySummary;
+  @Input() summary: WorkspaceSummary;
 
   constructor(
     private router: Router

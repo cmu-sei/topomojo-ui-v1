@@ -1,26 +1,26 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 // div {
 //     height: 100%;
 //     width: 100%;
 
-    mat-sidenav-container {
-        height: 100%;
+mat-sidenav-container {
+    height: 100%;
 
-        .main-content {
-            padding-top: 64px;
-        }
+    .main-content {
+        padding-top: 64px;
     }
-    mat-sidenav {
-        width: 400px;
+}
+mat-sidenav {
+    width: 400px;
 
-        .side-content {
-            position: absolute;
-            top: 64px;
-            bottom: 0px;
-            width: 100%;
-        }
+    .side-content {
+        position: absolute;
+        top: 64px;
+        bottom: 0px;
+        width: 100%;
     }
+}
 
 // }
 topomojo-navbar {

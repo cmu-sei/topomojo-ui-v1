@@ -1,0 +1,18 @@
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
+// Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
+@mixin mix-console-theme($theme) {
+    $primary: map-get($theme, primary);
+    $accent: map-get($theme, accent);
+    $warn: map-get($theme, warn);
+
+    .fail {
+        color: mat-color($warn);
+    }
+    .success {
+        color: mat-color($accent);
+    }
+    .pending {
+        color: mat-color($accent);
+    }
+}

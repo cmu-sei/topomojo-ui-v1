@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, ViewChild } from '@angular/core';
 import { TemplateDetail } from '../../../api/gen/models';
@@ -25,14 +25,13 @@ export class TemplateDetailFormComponent implements OnInit {
   update() {
     try {
         const s = JSON.parse(this.template.detail);
-        this.templateSvc.putTemplateDetail(this.template).subscribe(
+        this.templateSvc.updateDetail(this.template).subscribe(
             (data) => {
                 this.form.reset(this.form.value);
             },
             (err) => { }
         );
     } catch (e) {
-        // this.errorMsg = e.split('\n').reverse().pop();
         this.errors.push(e);
     }
   }

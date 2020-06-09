@@ -1,5 +1,6 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
+
 import { Injectable } from '@angular/core';
 import { ConsoleService } from './console.service';
 
@@ -16,16 +17,18 @@ export class MockConsoleService implements ConsoleService {
       stateCallback('connected');
       setTimeout(() => {
         stateCallback('disconnected');
-      }, 10000);
+      }, 60000);
     }
 
     if (this.counter % 3 === 1) { stateCallback('failed'); }
     if (this.counter % 3 === 0) { stateCallback('forbidden'); }
     this.counter += 1;
   }
+
   disconnect() {
     this.stateChanged('disconnected');
   }
+
   sendCAD() {}
   refresh() {}
   toggleScale() {}

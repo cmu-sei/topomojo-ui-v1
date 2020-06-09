@@ -1,7 +1,7 @@
-<!-- Copyright 2019 Carnegie Mellon University. All Rights Reserved. -->
+<!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
-<div *ngIf="workspace" class="workspace">
+<div *ngIf="workspace && workspace.canEdit" class="workspace">
 
   <h1>{{workspace.name}}</h1>
 
@@ -20,32 +20,41 @@
 
   <div class="section">
     <div class="header">
+
       <div class="title">
         <button (click)="selectorOpened=!selectorOpened" mat-button>
           <mat-icon>expand_{{selectorOpened ? 'less' : 'more'}}</mat-icon>
           Template Selector
         </button>
       </div>
+
       <div class="tools">
       </div>
+
     </div>
+
     <div *ngIf="selectorOpened" class="content">
       <topomojo-template-selector *ngIf="!atLimit()" (selected)="templateAdded($event)"></topomojo-template-selector>
       <p *ngIf="atLimit()">This workspace has reached it's template limit. [{{workspace.templateLimit}}]</p>
     </div>
+
   </div>
 
   <div class="section">
     <div class="header">
+
       <div class="title">
         <button (click)="uploaderOpened=!uploaderOpened" mat-button>
           <mat-icon>expand_{{uploaderOpened ? 'less' : 'more'}}</mat-icon>
           File Uploader
         </button>
       </div>
+
       <div class="tools">
       </div>
+
     </div>
+
     <div *ngIf="uploaderOpened" class="content">
       <h4>File Upload</h4>
       <p>
@@ -55,22 +64,24 @@
       </p>
       <topomojo-file-uploader [bucketId]="workspace.globalId"></topomojo-file-uploader>
     </div>
+
   </div>
 
   <div class="section">
     <div class="header">
+
       <div class="title">
         <button (click)="docOpened=!docOpened" mat-button>
           <mat-icon>expand_{{docOpened ? 'less' : 'more'}}</mat-icon>
           Lab Document
         </button>
       </div>
+
       <div class="tools">
-        <!-- <a [routerLink]="['/topo', 'doc', this.workspace.globalId]" matTooltip="Edit Doc" mat-icon-button>
-              <mat-icon>description</mat-icon>
-            </a> -->
       </div>
+
     </div>
+
     <div *ngIf="docOpened" class="content">
       <p>
         To reference an external document, add the url in Settings. To edit a lab doc here, follow the link:
@@ -79,21 +90,39 @@
         </a>
       </p>
     </div>
+
   </div>
 
   <div class="section">
     <div class="header">
+
       <div class="title">
         <button (click)="settingsOpened=!settingsOpened" mat-button>
           <mat-icon>expand_{{settingsOpened ? 'less' : 'more'}}</mat-icon>
           Workspace Settings
         </button>
       </div>
+
       <div class="tools">
       </div>
+
     </div>
+
     <div *ngIf="settingsOpened" class="content">
       <topomojo-workspace-settings [workspace]="workspace" (deleted)="deleted()"></topomojo-workspace-settings>
     </div>
+
   </div>
+
+  <div>
+    <h4>NOTE:</h4>
+    <p class="note">
+      Any workspace vm left idle for a day may be deleted by clean up routines.
+      You should save any vm changes at the end of each work session.
+      <br/><br/>
+      Any workspace left <em>idle and unpublished</em> for a week may be deleted
+      by clean up routines.
+    </p>
+  </div>
+
 </div>

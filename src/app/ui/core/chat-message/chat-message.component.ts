@@ -1,4 +1,4 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, OnChanges } from '@angular/core';
 import { SettingsService } from '../../../svc/settings.service';
@@ -14,8 +14,8 @@ import { RelativeMessage } from '../chat-panel/chat-panel.component';
 export class ChatMessageComponent implements OnChanges {
   @Input() message: RelativeMessage;
   private converter: Converter;
-  private renderedHtml: string;
-  private dateBreak: string;
+  renderedHtml: string;
+  dateBreak: string;
 
   constructor(
       private settingsSvc: SettingsService

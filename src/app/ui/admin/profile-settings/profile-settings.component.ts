@@ -1,9 +1,9 @@
-// Copyright 2019 Carnegie Mellon University. All Rights Reserved.
+// Copyright 2020 Carnegie Mellon University. All Rights Reserved.
 // Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information.
 import { Component, OnInit, Input, ViewChild, Output, EventEmitter } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { ProfileService } from '../../../api/profile.service';
-import { Profile } from '../../../api/gen/models';
+import { UserProfile } from '../../../api/gen/models';
 
 @Component({
   selector: 'topomojo-profile-settings',
@@ -11,8 +11,8 @@ import { Profile } from '../../../api/gen/models';
   styleUrls: ['./profile-settings.component.scss']
 })
 export class ProfileSettingsComponent implements OnInit {
-  @Input() profile: Profile;
-  @Output() deleted = new EventEmitter<Profile>();
+  @Input() profile: UserProfile;
+  @Output() deleted = new EventEmitter<UserProfile>();
   @ViewChild(NgForm) form;
 
   constructor(
@@ -23,7 +23,7 @@ export class ProfileSettingsComponent implements OnInit {
   }
 
   update() {
-    this.profileSvc.putProfilePriv(this.profile).subscribe(
+    this.profileSvc.update(this.profile).subscribe(
       () => {
         this.form.reset(this.form.value);
       }
@@ -31,7 +31,7 @@ export class ProfileSettingsComponent implements OnInit {
   }
 
   delete() {
-    this.profileSvc.deleteProfile(this.profile.id).subscribe(
+    this.profileSvc.delete(this.profile.id).subscribe(
       () => {
         this.deleted.emit(this.profile);
       }
