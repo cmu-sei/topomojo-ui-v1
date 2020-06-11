@@ -19,4 +19,5 @@ FROM nginx:alpine
 WORKDIR /var/www
 COPY --from=dev /app/nginx-static.conf /etc/nginx/conf.d/default.conf
 COPY --from=dev /app/dist .
+COPY --from=dev /app/LICENSE.md ./LICENSE.md
 EXPOSE 80
