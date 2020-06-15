@@ -9,7 +9,7 @@
 
       <div #consoleCanvas id="console-canvas-" class="canvas" [class.mock-console-connected]="showMockConnected()">
 
-        <button *ngIf="isConnected() && showCog" class="tool-btn overlay overlay-tr cog" (click)="toggleDrawer()" mat-button>
+        <button *ngIf="isConnected() && showCog" class="tool-btn overlay overlay-tl cog" (click)="toggleDrawer()" mat-button>
           <mat-icon>settings</mat-icon>
         </button>
 
@@ -24,7 +24,7 @@
 
     </mat-drawer-content>
 
-    <mat-drawer #drawer position="end" disableClose="false">
+    <mat-drawer #drawer position="start" disableClose="false">
 
       <div class="tools">
 
@@ -41,9 +41,8 @@
             <topomojo-confirm-button (confirmed)="console.sendCAD()" icon="keyboard" text="Ctrl-Alt-Del" color="accent"></topomojo-confirm-button>
 
             <p><small>
-              If the "Settings" button is in the way, remove it here.  You can still
-              open the settings panel by moving the mouse to the right edge of
-              the console.
+              If the "Settings" button is in the way, hide it here.  If hidden, you can
+              open the settings panel by moving the mouse to the left edge of the console.
             </small></p>
 
             <mat-slide-toggle name="showCog" [(ngModel)]="showCog"

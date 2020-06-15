@@ -245,17 +245,17 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   initHotspot(): void {
-    this.hotspot.x = window.innerWidth - this.hotspot.w;
+    // this.hotspot.x = window.innerWidth - this.hotspot.w;
     this.subs.push(
       fromEvent(document, 'mousemove').pipe(
         debounceTime(100),
         tap((e: MouseEvent) => {
-          if (this.drawer.opened && e.clientX < this.hotspot.x - 400) {
+          if (this.drawer.opened && e.clientX > 400) {
             this.drawer.close();
           }
         }),
         map((e: MouseEvent) => {
-          return this.isConnected() && e.clientX > this.hotspot.x;
+          return this.isConnected() && !this.showCog && e.clientX < 4; // > this.hotspot.x;
         }),
         distinctUntilChanged()
       ).subscribe((hot: boolean) => {
@@ -266,7 +266,7 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:resize', ['$event'])
   onResize(event) {
-    this.hotspot.x = event.target.innerWidth - this.hotspot.w;
+    // this.hotspot.x = event.target.innerWidth - this.hotspot.w;
     this.console.refresh();
   }
 }
