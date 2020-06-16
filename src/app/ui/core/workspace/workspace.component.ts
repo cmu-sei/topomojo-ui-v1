@@ -13,6 +13,7 @@ import { TemplateService } from '../../../api/template.service';
 import { ExpiringDialogComponent } from '../../shared/expiring-dialog/expiring-dialog.component';
 import { MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { ProfileService } from 'src/app/api/profile.service';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   templateUrl: './workspace.component.html',
@@ -172,21 +173,21 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
 
   deleted() {
     this.service.delete(this.workspace.id).subscribe(
-      (r: boolean) => {
+      () => {
         this.router.navigate(['/topo']);
       }
     );
   }
 
   deleteGamespaces() {
-    this.service.deleteWorkspaceGames(this.workspace.id).subscribe(
-      (result) => {
-          if (result) {
-              this.workspace.gamespaceCount = 0;
-          }
+    this.service.deleteWorkspaceGames(this.workspace.id).pipe(
+      finalize(() => this.deletingGames = false)
+    ).subscribe(
+      () => {
+        this.workspace.gamespaceCount = 0;
       },
       (err) => {
-          this.onError(err);
+        this.onError(err);
       }
     );
   }
@@ -205,6 +206,5 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
 
   onError(err) {
     this.errors.push(err.error);
-    // console.debug(err.error.message);
   }
 }
