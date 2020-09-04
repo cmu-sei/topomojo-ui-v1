@@ -19,6 +19,7 @@ import { MatDrawer } from '@angular/material/sidenav';
 import { AuthService, AuthTokenState } from '../../../svc/auth.service';
 import { IsoDataSource, IsoFile, VmNetDataSource } from '../../datasources';
 import { WorkspaceService } from '../../../api/workspace.service';
+import { ClipboardService } from 'src/app/svc/clipboard.service';
 
 @Component({
   selector: 'topomojo-console',
@@ -50,6 +51,9 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   feedback = '';
   feedbackState = '';
   showCog = true;
+  justClipped = false;
+  justPasted = false;
+  cliptext = '';
 
   constructor(
     private injector: Injector,
@@ -58,7 +62,8 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
     private vmSvc: VmService,
     private topologySvc: WorkspaceService,
     private toolbar: ToolbarService,
-    private tokenSvc: AuthService
+    private tokenSvc: AuthService,
+    private clipSvc: ClipboardService
   ) {
   }
 
@@ -86,6 +91,12 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   changeState(state: string): void {
+    if (state.startsWith('clip:')) {
+      this.cliptext = state.substring(5);
+      this.clipSvc.copyToClipboard(this.cliptext);
+      return;
+    }
+
     this.state = state;
     this.shadowState(state);
     this.drawer.close();
@@ -242,6 +253,18 @@ export class ConsoleComponent implements OnInit, AfterViewInit, OnDestroy {
         }
       )
     );
+  }
+
+  clip() {
+    this.console.copy();
+    this.justClipped = true;
+    timer(2000).subscribe(i => this.justClipped = false);
+  }
+
+  paste() {
+    this.console.paste(this.cliptext);
+    this.justPasted = true;
+    timer(2000).subscribe(i => this.justPasted = false);
   }
 
   initHotspot(): void {

@@ -100,6 +100,40 @@
             <topomojo-vm-question [id]="info.id"></topomojo-vm-question>
           </mat-expansion-panel>
 
+          <mat-expansion-panel>
+            <mat-expansion-panel-header>
+              <mat-panel-title>Clipboard</mat-panel-title>
+            </mat-expansion-panel-header>
+            <p><small>
+              COPY transfers the vm clip to <em>your</em> clipboard.
+              Select/Copy text in the vm using crtl-c or context menu
+              before clicking COPY here. (Clicking COPY shows text
+              below *AND* adds to your clipboard.)
+            </small></p>
+
+            <p>
+              <small>
+                PASTE sends the text below to the vm.
+                Ensure the vm cursor is focused in a window that
+                accepts keyboard input before clicking PASTE here.
+              </small>
+            </p>
+
+            <button (click)="clip()" matTooltip="Copy" mat-raised-button>
+              <mat-icon *ngIf="justClipped">check</mat-icon> Copy
+            </button>
+
+            <button (click)="paste()" matTooltip="Paste" mat-raised-button>
+              <mat-icon *ngIf="justPasted">check</mat-icon> Paste
+            </button>
+            <hr/>
+
+            <div>
+              <textarea matInput placeholder="Clipboard" rows="20" [(ngModel)]="cliptext"></textarea>
+            </div>
+
+          </mat-expansion-panel>
+
         </mat-accordion>
 
       </div>

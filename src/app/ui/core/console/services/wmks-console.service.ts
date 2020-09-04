@@ -14,11 +14,11 @@ export class WmksConsoleService implements ConsoleService {
     useVNCHandshake: false,
     position: 0, // WMKS.CONST.Position.CENTER,
   };
-  stateChanged: Function = (state: string) => { };
+  stateChanged: (state: string) => void;
 
   constructor() { }
 
-  connect(url: string, stateCallback: Function, options: any = {} ): void {
+  connect(url: string, stateCallback: (state: string) => void, options: any = {} ): void {
 
     if (stateCallback) { this.stateChanged = stateCallback; }
     this.options = {...this.options, ...options};
@@ -51,7 +51,8 @@ export class WmksConsoleService implements ConsoleService {
         // debug('wmks heartbeat: ' + data);
     })
     .register(WMKS.CONST.Events.COPY, function (e, data) {
-        // debug('wmks copy: ' + data);
+      // debug('wmks copy: ' + data);
+        stateCallback('clip:' + data);
     })
     .register(WMKS.CONST.Events.ERROR, function (e, data) {
         // debug('wmks error: ' + data.errorType);
@@ -83,6 +84,22 @@ export class WmksConsoleService implements ConsoleService {
   sendCAD(): void {
     if (this.wmks) {
       this.wmks.sendCAD();
+    }
+  }
+
+  copy(): void {
+    if (this.wmks) {
+      this.wmks.grab();
+    }
+  }
+
+  async paste(text: string) {
+    if (this.wmks) {
+      for (const line of text.split('\n')) {
+        this.wmks.sendInputString(line);
+        this.wmks.sendInputString('\n');
+        await new Promise(r => setTimeout(r, 40));
+      }
     }
   }
 

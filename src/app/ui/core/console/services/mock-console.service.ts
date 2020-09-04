@@ -7,11 +7,11 @@ import { ConsoleService } from './console.service';
 @Injectable()
 export class MockConsoleService implements ConsoleService {
   counter = 0;
-  stateChanged: Function = () => { };
+  stateChanged: (state: string) => void;
 
   constructor() { }
 
-  connect(url: string, stateCallback: Function, options: any) {
+  connect(url: string, stateCallback: (state: string) => void, options: any) {
     if (stateCallback === Function) { this.stateChanged = stateCallback; }
     if (this.counter % 3 === 2) {
       stateCallback('connected');
@@ -36,5 +36,7 @@ export class MockConsoleService implements ConsoleService {
   showKeyboard() {}
   showExtKeypad() {}
   showTrackpad() {}
+  copy() {}
+  paste() {}
   dispose() {}
 }
