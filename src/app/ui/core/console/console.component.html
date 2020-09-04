@@ -126,6 +126,11 @@
             <button (click)="paste()" matTooltip="Paste" mat-raised-button>
               <mat-icon *ngIf="justPasted">check</mat-icon> Paste
             </button>
+
+            <button (click)="cliptext=''" matTooltip="Paste" mat-raised-button>
+              Clear
+            </button>
+
             <hr/>
 
             <div>
