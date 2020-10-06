@@ -100,7 +100,8 @@ const mats = [
       { path: 'logout', component: LogoutComponent },
       { path: 'oidc', component: OidcCallbackComponent },
       { path: 'oidc-silent', component: OidcSilentComponent },
-      { path: 'invitation/:code', component: EnlistComponent, canActivate: [AuthGuard] },
+      { path: 'invite-gs/:code', component: EnlistComponent, canActivate: [AuthGuard] },
+      { path: 'invite-ws/:code', component: EnlistComponent, canActivate: [AuthGuard] },
       { path: 'topo', children: [
         { path: 'doc/:key', children: [
           { path: '', component: DocumentImageManagerComponent, outlet: 'sidenav' },
@@ -123,7 +124,6 @@ const mats = [
           { path: '', component: GamespaceComponent},
           { path: '', component: ChatPanelComponent, outlet: 'sidenav' },
         ]},
-        { path: 'enlist/:code', component: EnlistComponent, canActivate: [AuthGuard] },
         { path: '', component: GamespaceLobbyComponent }
       ]},
       { path: 'console/:id/:name', component: ConsoleComponent, canActivate: [AuthGuard] }

@@ -250,7 +250,7 @@ export class GamespaceComponent implements OnInit, OnDestroy {
 
   addInviteToClipboard() {
 
-    this.inviteUrl = `${this.settingsSvc.hostUrl}/mojo/enlist/${this.game.shareCode}`;
+    this.inviteUrl = `${this.settingsSvc.hostUrl}/invite-ws/${this.game.shareCode}`;
 
     this.clipboard.copyToClipboard(this.inviteUrl);
 

@@ -26,9 +26,9 @@ export class EnlistComponent implements OnInit {
     const code = this.route.snapshot.paramMap.get('code');
 
     const url = this.route.snapshot.pathFromRoot.map(o => o.url[0]).join('/');
-
+    console.log(url);
     // TODO: clean this up with a single api endpoint
-    const query = (url.startsWith('/mojo'))
+    const query = (url.startsWith('/invite-gs'))
       ? this.gamespaceSvc.createPlayer(code)
       : this.workspaceSvc.createWorker(code);
 

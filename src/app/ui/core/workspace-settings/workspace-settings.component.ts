@@ -64,7 +64,7 @@ export class WorkspaceSettingsComponent {
   }
 
   shareUrl(): string {
-    return `${this.hostUrl}/invitation/${this.workspace.shareCode}`;
+    return `${this.hostUrl}/invite-gs/${this.workspace.shareCode}`;
   }
 
   newInvitation() {
