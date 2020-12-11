@@ -25,7 +25,7 @@
             "styles": [
               "src/styles/material-icons.css",
               "src/styles/open-sans.css",
-              "node_modules/vmware-wmks/css/css/wmks-all.css",
+              "node_modules/vmware-wmks/wmks-all.css",
               "src/styles.scss"
             ],
             "scripts": [
