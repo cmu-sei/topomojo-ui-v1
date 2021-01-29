@@ -58,9 +58,11 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
 
     this.service.load(this.id).subscribe(
       (result: Workspace) => {
-          this.workspace = result;
-          this.startListening();
-          this.settingsOpened = this.workspace.templates.length === 0;
+        const sortedTemplates = result.templates.sort((a, b) => a.name < b.name ? -1 : a.name === b.name ? 0 : 1);
+        result.templates = sortedTemplates;
+        this.workspace = result;
+        this.startListening();
+        this.settingsOpened = this.workspace.templates.length === 0;
       },
       (err) => {
         this.onError(err);
