@@ -53,5 +53,7 @@ export class GeneratedWorkspaceService extends GeneratedService {
     public getWorkspaceNets(id: string): Observable<VmOptions> {
         return this.http.get<VmOptions>(this.api.url + '/api/workspace/' + id + '/nets');
     }
-
+    public putWorkspaceChallenge(id: number, model: any): Observable<any> {
+        return this.http.put(this.api.url + '/api/workspace/' + id + '/challenge', model);
+    }
 }

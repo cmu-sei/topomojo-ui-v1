@@ -66,6 +66,7 @@ import { EnlistComponent } from './enlist/enlist.component';
 import { DocumentImageManagerComponent } from './document-image-manager/document-image-manager.component';
 import { SharedModule } from '../shared/shared.module';
 import { OidcCallbackComponent } from './oidc-callback/oidc-callback.component';
+import { ChallengeEditorComponent } from './challenge-editor/challenge-editor.component';
 
 const mats = [
   MatFormFieldModule,
@@ -154,6 +155,7 @@ const mats = [
     EnlistComponent,
     DocumentImageManagerComponent,
     OidcCallbackComponent,
+    ChallengeEditorComponent,
   ],
   exports: [
     WelcomeComponent,

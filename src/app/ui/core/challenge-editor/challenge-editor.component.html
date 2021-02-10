@@ -1,0 +1,30 @@
+<p>
+  Provide questions in yaml array format; fields <em>text, hint, answer, weight, grader</em>.
+</p>
+
+<pre>
+  questions:
+  - text: Who's on first?
+    answer: Yes
+    grader: match | matchAny | matchAll
+  </pre>
+
+<p>
+  Random macro form: <em>##target:type:range##</em> where <em>type: int, hex, b64, uid</em>.
+</p>
+
+<pre>
+##target:type:range##
+##jam:hex:8##
+##jam:b64:24##
+##jam:uid:0##
+##jam:int:99-9999##
+</pre>
+
+<div class="form-group">
+  <textarea matInput type="textarea" rows="10" [(ngModel)]="text" placeholder="yaml question array"></textarea>
+  <small>yaml array of questions</small>
+</div>
+
+<button mat-raised-button color="primary" type="submit" (click)="save()">Save</button>
+<topomojo-error-div [errors]="errors"></topomojo-error-div>
