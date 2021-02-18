@@ -31,13 +31,13 @@ import { CommonModule } from '@angular/common';
     MatSidenavModule,
     MatInputModule,
     RouterModule.forRoot([
-      {
+    {
         path: 'admin',
         loadChildren: () => import('./ui/admin/admin.module').then(m => m.AdminModule)
-      },
-      { path: '', component: WelcomeComponent, pathMatch: 'full' },
-      { path: '**', component: PageNotFoundComponent }
-    ])
+    },
+    { path: '', component: WelcomeComponent, pathMatch: 'full' },
+    { path: '**', component: PageNotFoundComponent }
+], { relativeLinkResolution: 'legacy' })
   ],
   exports: [
     RouterModule

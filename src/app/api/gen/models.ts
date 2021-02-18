@@ -177,6 +177,7 @@ export interface Workspace {
     templateLimit?: number;
     isPublished?: boolean;
     gamespaceCount?: number;
+    challenge?: string;
     workers?: Array<Worker>;
     templates?: Array<Template>;
 }

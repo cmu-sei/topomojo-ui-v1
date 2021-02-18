@@ -99,6 +99,27 @@
     <div class="header">
 
       <div class="title">
+        <button (click)="challengeOpened=!challengeOpened" mat-button>
+          <mat-icon>expand_{{challengeOpened ? 'less' : 'more'}}</mat-icon>
+          Challenge Questions
+        </button>
+      </div>
+
+      <div class="tools">
+      </div>
+
+    </div>
+
+    <div *ngIf="challengeOpened" class="content">
+      <topomojo-challenge-editor [workspace]="workspace"></topomojo-challenge-editor>
+    </div>
+
+  </div>
+
+  <div class="section">
+    <div class="header">
+
+      <div class="title">
         <button (click)="settingsOpened=!settingsOpened" mat-button>
           <mat-icon>expand_{{settingsOpened ? 'less' : 'more'}}</mat-icon>
           Workspace Settings

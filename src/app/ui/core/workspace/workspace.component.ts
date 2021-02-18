@@ -31,6 +31,7 @@ export class WorkspaceComponent implements OnInit, OnDestroy {
   selectorOpened = false;
   uploaderOpened = false;
   docOpened = false;
+  challengeOpened = false;
   collabButton: NavbarButton = {
     icon: 'group',
     description: 'Collaborate',
