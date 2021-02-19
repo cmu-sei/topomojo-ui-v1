@@ -5,7 +5,7 @@ import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
 import { Converter } from 'showdown/dist/showdown';
 import { DocumentService } from '../../../api/document.service';
 import { SettingsService } from '../../../svc/settings.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { catchError, finalize } from 'rxjs/operators';
 import { of, interval, Observable, Subscription } from 'rxjs';
 import { ToolbarService } from '../../svc/toolbar.service';
@@ -25,11 +25,23 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   dirty: boolean;
   showImageDiv: boolean;
   markdown = '';
+  codeTheme = this.settingsSvc.localSettings.altTheme ? 'vs-dark' : 'vs-light';
+  editorOptions = {
+    theme: this.codeTheme,
+    language: 'markdown',
+    minimap: { enabled: false },
+    lineNumbers: "on",
+    quickSuggestions: false,
+    readOnly: false,
+    wordWrap: "on",
+    scrollBeyondLastLine: false
+  };
   private saveInterval: Subscription;
 
   constructor(
     private service: DocumentService,
     private settingsSvc: SettingsService,
+    private router: Router,
     private route: ActivatedRoute,
     private toolbar: ToolbarService
   ) {
@@ -50,6 +62,12 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         this.markdown = text;
       }
     );
+    this.toolbar.theme$.subscribe(
+      (theme: boolean) => {
+        this.codeTheme = theme ? 'vs-dark' : 'vs-light';
+        this.updateEditorOptions();
+      }
+    )
   }
 
   ngOnDestroy() {
@@ -86,6 +104,11 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.toolbar.sideData = { key: this.id };
     this.toolbar.addButtons([
       {
+        text: 'return to workspace',
+        icon: 'arrow_back',
+        clicked: () => this.returnToWorkspace()
+      },
+      {
         text: 'save',
         icon: 'cloud_upload',
         clicked: () => this.save(),
@@ -96,6 +119,14 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         clicked: () => this.toolbar.toggleSide()
       }
     ]);
+  }
+
+  returnToWorkspace(): void {
+    this.router.navigate([`/topo/`] );
+  }
+
+  updateEditorOptions(): void {
+    this.editorOptions = { ...this.editorOptions, theme: this.codeTheme };
   }
 
 }

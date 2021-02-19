@@ -51,10 +51,11 @@ mat-drawer-container {
         top: 64;
         left: 0px;
         bottom: 0;
+        overflow-y: hidden;
         // background-color: white;
         // text-align: center;
 
-        textarea {
+        ngx-monaco-editor {
             position: absolute;
             top: 4px;
             left: 4px;

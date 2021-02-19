@@ -4,11 +4,12 @@
 <mat-drawer-container>
 
   <mat-drawer class="editor" position="start" mode="side" opened="true" disableClose="true">
-    <textarea matInput
-      name="editor"
-      type="text"
+    <ngx-monaco-editor
+      id="markdown-editor"
+      [options]="editorOptions" 
       [(ngModel)]="markdown"
-      (keyup)="reRender()"></textarea>
+      (keyup)="reRender()">
+    </ngx-monaco-editor>
   </mat-drawer>
 
   <mat-drawer #imageDrawer class="images" position="end" disableClose="false">
