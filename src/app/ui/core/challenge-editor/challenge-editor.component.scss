@@ -1,12 +1,27 @@
-pre {
-  background-color: whitesmoke;
-  color: gray;
-  border-radius: 4px;
-  padding: 4px;
+#yaml-editor {
+  resize: vertical;
+  overflow: auto;
+  min-height: 15em;
+  max-height: 75em;
 }
-textarea {
-  font-family: 'Courier New', Courier, monospace;
-  background-color: whitesmoke;
-  border-radius: 4px;
-  padding: 4px;
+
+#yaml-hints {
+  width: 100%;
+  font-size: 75%;
+}
+
+.hint-end {
+  float: right;
+}
+
+#sample-editor {
+  height: 5em;
+}
+
+#macro-editor {
+  height: 7em;
+}
+
+.submit {
+  text-align: center;
 }
