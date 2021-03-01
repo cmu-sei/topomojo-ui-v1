@@ -1,6 +1,22 @@
 <!-- Copyright 2020 Carnegie Mellon University. All Rights Reserved. -->
 <!-- Released under a 3 Clause BSD-style license. See LICENSE.md in the project root for license information. -->
 
+<div  class="document-status">
+  <div class="message-div">
+    <p>{{ documentMessage }}</p>
+  </div>
+  <div class="saved-div">
+    <p>{{ docCurrentlyEdited() ? "Saving..." : !!lastSaved ? "Saved " + (lastSaved | shortdate) : '' }}</p>
+  </div>
+  <div *ngIf="key" class="presence-div">
+    <span *ngFor="let actor of actors" class="label label-default" [class.online]="actor.online">
+      <mat-icon *ngIf="!actor.editing" inline="true">account_box</mat-icon>
+      <mat-icon *ngIf="actor.editing"  inline="true">keyboard</mat-icon>
+      {{actor.name || "Anonymous"}}
+    </span>
+  </div>
+</div>
+
 <mat-drawer-container>
 
   <mat-drawer class="editor" position="start" mode="side" opened="true" disableClose="true">
@@ -8,7 +24,7 @@
       id="markdown-editor"
       [options]="editorOptions" 
       [(ngModel)]="markdown"
-      (keyup)="reRender()">
+      (onInit)="onInitEditor($event)">
     </ngx-monaco-editor>
   </mat-drawer>
 

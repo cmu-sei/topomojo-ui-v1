@@ -37,9 +37,42 @@
     }
 }
 
+.document-status {
+    display: flex;
+    div {
+        flex: 1;
+        display: flex;
+    }
+    .message-div {
+        justify-content: flex-start;
+        p {
+            font-size: 14px;
+            margin: 2px 10px;
+            padding: 2px;
+        }
+    }
+    .saved-div {
+        justify-content: center;
+        p {
+            font-size: 14px;
+            margin: 2px;
+            padding: 2px;
+        }
+    }
+    .presence-div {
+        justify-content: flex-end;
+        font-size: 12px;
+        span {
+            margin: 2px 4px;
+            padding: 3px;
+            border-radius: 4px;
+        }
+    }
+}
+
 mat-drawer-container {
     position: fixed;
-    top: 64px;
+    top: 96px;
     bottom: 0px;
     left: 0px;
     right: 0px;
@@ -56,6 +89,7 @@ mat-drawer-container {
         // text-align: center;
 
         ngx-monaco-editor {
+            z-index: 10;
             position: absolute;
             top: 4px;
             left: 4px;

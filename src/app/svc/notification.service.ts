@@ -55,6 +55,9 @@ export class NotificationService {
     private gameSource: Subject<any> = new Subject<any>();
     gameEvents: Observable<any> = this.gameSource.asObservable();
 
+    private documentSource: Subject<any> = new Subject<any>();
+    documentEvents: Observable<any> = this.documentSource.asObservable();
+
     private initTokenRefresh(): void {
         this.authSvc.tokenState$.subscribe(
             (state: AuthTokenState) => {
@@ -156,6 +159,13 @@ export class NotificationService {
                 this.connection.on('globalEvent',
                     (msg) => { this.globalSource.next(msg); }
                 );
+                this.connection.on('DocumentEvent',
+                    (msg) => { 
+                        if (msg.action === 'DOCUMENT.UPDATED') { this.setDocumentActorEditing(msg, true); }
+                        if (msg.action === 'DOCUMENT.IDLE') { this.setDocumentActorEditing(msg, false); }
+                        this.documentSource.next(msg); 
+                    }
+                );
                 this.log('sigr: invoking Listen');
                 this.connection.invoke('Listen', this.key).then(
                     () => this.log('sigr: invoked Listen'));
@@ -202,6 +212,12 @@ export class NotificationService {
         this.connection.invoke('Typing', this.key, v);
     }
 
+    editing(v: boolean): void {
+        this.connection.invoke('Editing', this.key, v);
+    }
+    edited(changes: any): void {
+        this.connection.invoke('Edited', this.key, changes);
+    }
     sendChat(text: string): void {
         this.connection.invoke('Post', this.key, text);
     }
@@ -225,6 +241,14 @@ export class NotificationService {
         }
     }
 
+    private setDocumentActorEditing(event: HubEvent, val: boolean): void {
+        const actor = this.actors.find(a => a.id === event.actor.id);
+        if (actor.editing !== val) {
+            actor.editing = val;
+            this.actors$.next(this.actors);
+        }
+    }
+
     log(msg): void {
         if (this.debug) {
             console.log(msg);
@@ -244,6 +268,7 @@ export interface Actor {
     name: string;
     online?: boolean;
     typing?: boolean;
+    editing?: boolean;
 }
 
 export interface ChatMessage {
