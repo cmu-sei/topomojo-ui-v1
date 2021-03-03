@@ -7,7 +7,7 @@ import { Converter } from 'showdown/dist/showdown';
 import { DocumentService } from '../../../api/document.service';
 import { SettingsService } from '../../../svc/settings.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, finalize } from 'rxjs/operators';
+import { debounceTime, catchError, finalize, distinctUntilChanged, auditTime, filter } from 'rxjs/operators';
 import { of, interval, Observable, Subscription, Subject } from 'rxjs';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
@@ -36,6 +36,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   actors: Array<Actor>;
   documentMessage? : string;
   lastSaved: string = '';
+  diffPatcher = new diff.diff_match_patch();
   // Subscription for local user typing status
   editingDoc: boolean = false;
   private editingSource: Subject<boolean> = new Subject<boolean>();
@@ -46,6 +47,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private textEdits$: Observable<any> = this.textEditsSource.asObservable();
   // Monitor for unlocking the document 
   private lockedMonitor: any;
+  // markdown subject
+  private editorChangeStatus$: Subject<any> = new Subject<any>();
   rendered: string;
   dirty: boolean;
   showImageDiv: boolean;
@@ -58,7 +61,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   remoteCursor?: Position = null;
   tooltipMessage? = null;
   connectionLoading: boolean = true;
-  readOnly = true; // start locked until loaded 
+  readOnly = false; // start locked until loaded 
   codeTheme = this.settingsSvc.localSettings.altTheme ? 'vs-dark' : 'vs-light';
   editorOptions: EditorOptions = {
     theme: this.codeTheme,
@@ -126,29 +129,53 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
             this.notifier.editing(isEditing);
         }
       ),
-      this.textEdits$.subscribe(
-        (edits: DocumentUpdates) => {
-          this.notifier.edited(edits);
+      // this.textEdits$.pipe(
+      //     auditTime(200),
+      //     distinctUntilChanged()
+      //   ).subscribe(
+      //   (edits: DocumentUpdates) => {
+      //     console.log("debounce");
+      //     this.notifier.edited(edits);
+      //   }
+      // ),
+      this.editorChangeStatus$.pipe(
+          filter(() => !(this.readOnly || this.connectionLoading)),
+          auditTime(200), // send updates at most every 200ms
+          distinctUntilChanged((prev, curr) => prev.markdown === curr.markdown)
+        ).subscribe(
+        (status: EditorStatus) => {
+          console.log("debounce");
+          const model: DocumentUpdates = {
+            position: status.position,
+            changes: null,
+            patches: this.createPatchModel()
+          };
+          setTimeout( () => { this.notifier.edited(model); }, 1000 );
+          // this.notifier.edited(model);
+          this.previousMarkdown = this.markdown;
         }
       ),
       this.notifier.documentEvents.subscribe(
         (event: HubEvent) => {
           console.log("Doc Event", event);
           if (event.action == 'DOCUMENT.IDLE') {
-            this.resetRemoteEditor();
+            // this.resetRemoteEditor();
           } else if (event.action == 'DOCUMENT.SAVED') { 
-            this.lastSaved = event.model.whenSaved;
-            if (!this.editingDoc) // syncrhonize entire document when possible
-              this.markdown = event.model.text;
+            // this.lastSaved = event.model.whenSaved;
+            // if (!this.editingDoc) // syncrhonize entire document when possible
+            //   this.markdown = event.model.text;
             // this.resetRemoteEditor(); // treat SAVED as end of typing... bad bc autosave, etc
           } else if (event.action == 'DOCUMENT.UPDATED') {
             this.remoteEditingStarted();
             this.userEditing = event.actor.name;
             this.documentMessage = this.userEditing + ' is editing...';
-            this.setReadOnly(true);
-            this.applyRemoteEdit(event.model.changes);
+            // this.setReadOnly(true);
+            console.log(event.model.patches);
+            this.applyPatches(event.model.patches);
+            this.previousMarkdown = this.markdown;
+            // this.applyRemoteEdit(event.model.changes);
             this.remoteCursor = event.model.position;
-            this.setRemoteCursor();
+            // this.setRemoteCursor();
             this.render();
           }
         }
@@ -259,18 +286,45 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.tooltipMessage?.showMessage(message, this.editor.getPosition());
     });
     this.editor.onDidChangeModelContent((event) => {
-      if (event.isFlush || this.applyingEdits) // only respond to local/user-made changes
-        return
-      const model: DocumentUpdates = {
-        changes: event.changes,
-        position: this.getNewCursorPosition(event.changes)
+      if (event.isFlush || this.applyingEdits) { // only respond to local/user-made changes
+        console.log("flush");
+        this.previousMarkdown = this.markdown;
+        return;
       }
+      // const diffs = this.diffPatcher.diff_main(this.previousMarkdown, this.markdown);
+      // const patches = this.diffPatcher.patch_make(diffs);
+      const patches = this.diffPatcher.patch_make(this.previousMarkdown, this.markdown);
+      console.log(patches);
+      // const model: DocumentUpdates = {
+      //   changes: event.changes,
+      //   position: this.getNewCursorPosition(event.changes),
+      //   patches: patches
+      // };
       this.editing();
-      this.textEditsSource.next(model);
+      // this.textEditsSource.next(model);
+      const model: EditorStatus = {
+        markdown: this.markdown,
+        position: this.getNewCursorPosition(event.changes)
+      };
+      this.editorChangeStatus$.next(model);
     });
     // keep track of focus status to reset properly 
     this.editor.onDidFocusEditorWidget(() => this.editorFocused = true );
     this.editor.onDidBlurEditorWidget(() => this.editorFocused = false );
+  }
+
+  private createPatchModel() {
+    const patches = this.diffPatcher.patch_make(this.previousMarkdown, this.markdown);
+    return patches;
+  }
+
+  private applyPatches(patches) {
+    const result = this.diffPatcher.patch_apply(patches, this.markdown);
+    console.log(result);
+    if (result[1][0] == false)
+      alert(result);
+    this.markdown = result[0];
+    this.previousMarkdown = this.markdown;
   }
 
   private applyRemoteEdit(changes: Changes) {
@@ -288,7 +342,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     if (this.editorFocused)
       this.editor?.focus();
     this.tooltipMessage = this.editor.getContribution('editor.contrib.messageController');
-    this.setRemoteCursor();
+    // this.setRemoteCursor();
   }
   
   private editorViewChanged(reason?: CursorChangeReason) {
@@ -329,10 +383,15 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     if (this.tooltipMessage && this.remoteCursor && this.userEditing)
         this.tooltipMessage.showMessage(this.userEditing, this.remoteCursor);
   }
-  
 }
 
 export interface DocumentUpdates {
   changes: Changes;
+  position: Position;
+  patches: any;
+}
+
+export interface EditorStatus {
+  markdown: string;
   position: Position;
 }
