@@ -7,17 +7,20 @@ import { Converter } from 'showdown/dist/showdown';
 import { DocumentService } from '../../../api/document.service';
 import { SettingsService } from '../../../svc/settings.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { debounceTime, catchError, finalize, distinctUntilChanged, auditTime, filter } from 'rxjs/operators';
-import { of, interval, Observable, Subscription, Subject } from 'rxjs';
+import { catchError, finalize, auditTime, filter } from 'rxjs/operators';
+import { of, interval, Subscription, Subject } from 'rxjs';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import * as monaco from 'monaco-editor';
 
+// Monaco aliases 
 import Position = monaco.Position;
 import CursorChangeReason = monaco.editor.CursorChangeReason;
+type TextRange = monaco.IRange;
 type Editor = monaco.editor.ICodeEditor;
+type EditorModel = monaco.editor.ITextModel;
 type Change =  monaco.editor.IModelContentChange;
-type Changes = Array<Change>;
+type ChangeEvent = Array<Change>; // Multiple locations can be changed at once
 type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions;
 type EditorViewState = monaco.editor.ICodeEditorViewState;
 
@@ -34,35 +37,12 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   subs = [];
   key: string;
   actors: Array<Actor>;
-  documentMessage? : string;
-  lastSaved: string = '';
-  diffPatcher = new diff.diff_match_patch();
-  // Subscription for local user typing status
-  editingDoc: boolean = false;
-  private editingSource: Subject<boolean> = new Subject<boolean>();
-  private editing$: Observable<boolean> = this.editingSource.asObservable();
-  private editingMonitor: any;
-  // Subscription for new changes to text content in editor
-  private textEditsSource: Subject<any> = new Subject<any>();
-  private textEdits$: Observable<any> = this.textEditsSource.asObservable();
-  // Monitor for unlocking the document 
-  private lockedMonitor: any;
-  // markdown subject
-  private editorChangeStatus$: Subject<any> = new Subject<any>();
-  rendered: string;
-  dirty: boolean;
-  showImageDiv: boolean;
   markdown: string = '';
-  applyingEdits: boolean = false;
+  rendered: string;
   editor?: Editor = null;
-  editorViewState?: EditorViewState;
-  editorFocused: boolean = true;
-  userEditing?: string;
-  remoteCursor?: Position = null;
-  tooltipMessage? = null;
-  connectionLoading: boolean = true;
-  readOnly = false; // start locked until loaded 
-  codeTheme = this.settingsSvc.localSettings.altTheme ? 'vs-dark' : 'vs-light';
+  editorModel?: EditorModel = null;
+  codeTheme: string = this.settingsSvc.localSettings.altTheme ? 'vs-dark' : 'vs-light';
+  readOnly: boolean = true; // Initially locked until loaded
   editorOptions: EditorOptions = {
     theme: this.codeTheme,
     language: 'markdown',
@@ -73,9 +53,25 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     wordWrap: "on",
     scrollBeyondLastLine: false,
     linkedEditing: true,
-    hover: { delay: 0 },
+    // hover: { delay: 0 },
     fixedOverflowWidgets: true
   };
+  timeLastSaved: string = '';
+  statusMessage?: string;
+  editStartTime?: number;
+  connectionLoading: boolean = true;
+  private currentlyEditing: boolean = false;
+  private editingMonitor: any;
+  private lockedMonitor: any;
+  private edits: DocumentEdits = {editsQueue: []};
+  private editsSubject$: Subject<DocumentEdits> = new Subject<DocumentEdits>();
+  private dirty: boolean;
+  private applyingRemoteEdits: boolean = false;
+  private editorViewState?: EditorViewState;
+  private editorFocused: boolean = true;
+  private userEditing?: string;
+  private tooltipMessage? = null;
+  remoteCursor?: Position = null; // NOT USED
   private saveInterval: Subscription;
 
   constructor(
@@ -123,59 +119,41 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
           this.setReadOnly(false);
         }
       }),
-      this.editing$.subscribe(
-        (isEditing: boolean) => {
-          if (!isEditing) // only send when stop typing => DOCUMENT.IDLE
-            this.notifier.editing(isEditing);
-        }
-      ),
-      // this.textEdits$.pipe(
-      //     auditTime(200),
-      //     distinctUntilChanged()
-      //   ).subscribe(
-      //   (edits: DocumentUpdates) => {
-      //     console.log("debounce");
-      //     this.notifier.edited(edits);
-      //   }
-      // ),
-      this.editorChangeStatus$.pipe(
+      this.editsSubject$.pipe(
           filter(() => !(this.readOnly || this.connectionLoading)),
-          auditTime(200), // send updates at most every 200ms
-          distinctUntilChanged((prev, curr) => prev.markdown === curr.markdown)
+        auditTime(300), // Send updates at most every 300ms
         ).subscribe(
-        (status: EditorStatus) => {
-          console.log("debounce");
-          const model: DocumentUpdates = {
-            position: status.position,
-            changes: null,
-            patches: this.createPatchModel()
-          };
-          setTimeout( () => { this.notifier.edited(model); }, 1000 );
-          // this.notifier.edited(model);
-          this.previousMarkdown = this.markdown;
+        (edits: DocumentEdits) => {
+          this.notifier.edited(this.mapToDocumentEditsDTO(edits)); 
+          this.edits.editsQueue = [];
         }
       ),
       this.notifier.documentEvents.subscribe(
         (event: HubEvent) => {
-          console.log("Doc Event", event);
-          if (event.action == 'DOCUMENT.IDLE') {
-            // this.resetRemoteEditor();
-          } else if (event.action == 'DOCUMENT.SAVED') { 
-            // this.lastSaved = event.model.whenSaved;
-            // if (!this.editingDoc) // syncrhonize entire document when possible
-            //   this.markdown = event.model.text;
-            // this.resetRemoteEditor(); // treat SAVED as end of typing... bad bc autosave, etc
+          if (event.action == 'DOCUMENT.SAVED') { 
+            this.timeLastSaved = event.model.whenSaved;
+            if (!this.currentlyEditing && (this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
+              this.markdown = event.model.text; // Syncrhonize entire document from server copy
+              this.render();
+            }
+            this.resetRemoteEditor(); // Unlock once remote edits are saved
           } else if (event.action == 'DOCUMENT.UPDATED') {
+            const model = this.mapFromDocumentEditsDTO(event.model);
+            if (this.currentlyEditing) { // Conflict
+              if (this.hasPriority(event.actor, model.timestamp)) { 
+                return; // Don't apply changes and don't lock document
+              } else {
+                this.currentlyEditing = false;
+                this.editStartTime = null;
+                clearTimeout(this.editingMonitor);
+              }
+            }
             this.remoteEditingStarted();
             this.userEditing = event.actor.name;
-            this.documentMessage = this.userEditing + ' is editing...';
-            // this.setReadOnly(true);
-            console.log(event.model.patches);
-            this.applyPatches(event.model.patches);
-            this.previousMarkdown = this.markdown;
-            // this.applyRemoteEdit(event.model.changes);
-            this.remoteCursor = event.model.position;
-            // this.setRemoteCursor();
+            this.statusMessage = this.userEditing + ' is editing...';
+            this.setReadOnly(true);
+            this.applyRemoteEdit(model.editsQueue);
+            this.remoteCursor = model.position;
             this.render();
           }
         }
@@ -187,6 +165,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.toolbar.reset();
     this.notifier.stop();
     if (this.saveInterval) { this.saveInterval.unsubscribe(); }
+    if (this.currentlyEditing)
+      this.save(true)
     this.subs.forEach(sub => { sub.unsubscribe(); });
   }
 
@@ -209,33 +189,44 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   editing() {
-    if (this.readOnly)
-      return
+    this.dirty = true;
     this.reRender();
-    this.editingDoc = true;
-    this.editingSource.next(this.editingDoc);
+    if (!this.currentlyEditing) {
+      this.currentlyEditing = true;
+      this.editStartTime = this.generateTimestamp();
+    }
     clearTimeout(this.editingMonitor);
     this.editingMonitor = setTimeout(() => {
-      this.editingDoc = false;
-      this.editingSource.next(this.editingDoc);
-      this.save();
-    }, 2000);
+      this.currentlyEditing = false;
+      this.editStartTime = null;
+      this.save(true);
+    }, 3000);
   }
 
+  /* Use a timer to monitor remote typing and locking. If they are disconnected 
+    before sending a message to unlock, automatically release the lock after 7s. 
+    Because an error may have occurred, reload the document from the server. */
   remoteEditingStarted() { 
     clearTimeout(this.lockedMonitor);
     this.lockedMonitor = setTimeout(() => {
-      // shouldn't ever get past 2000ms without IDLE or UPDATED event to clear monitor
+      this.service.getDocument(this.id).pipe(
+        catchError(err => of('# Document Title')),
+        finalize(() => this.render())
+      ).subscribe(
+        (text: string) => {
+          this.markdown = text;
+          this.render();
       this.resetRemoteEditor();
-    }, 5000); 
+          console.log({t:"reloaded document from disk"});
+  }
+      );
+    }, 7000); 
   }
 
-  save() {
-    if (this.dirty) {
-      this.service.updateDocument(this.id, this.markdown)
-        .subscribe(result => {
-          this.dirty = false;
-        });
+  save(fromTyping: boolean = false) {
+    if (this.dirty || fromTyping) { 
+      this.service.updateDocument(this.id, this.markdown, fromTyping)
+        .subscribe(() => { this.dirty = false; });
     }
   }
 
@@ -244,9 +235,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.toolbar.sideData = { key: this.id };
     this.toolbar.addButtons([
       {
-        text: 'return to workspace',
+        text: 'return to workspaces',
         icon: 'arrow_back',
-        clicked: () => this.returnToWorkspace()
+        clicked: () => this.returnToWorkspaces()
       },
       {
         text: 'save',
@@ -261,12 +252,12 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     ]);
   }
 
-  returnToWorkspace(): void {
+  returnToWorkspaces(): void {
     this.router.navigate([`/topo/`] );
   }
 
   docCurrentlyEdited() {
-    return !this.connectionLoading && (this.readOnly || this.editingDoc);
+    return !this.connectionLoading && (this.readOnly || this.currentlyEditing);
   }
 
   onInitEditor(editor: Editor) {
@@ -276,61 +267,48 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.restoreEditorViewState();
     else
       this.saveEditorViewState();
-    // save and restore editor view state when changed
+    // Save and restore editor view state when changed
     this.editor.onDidChangeCursorPosition((event) => this.editorViewChanged(event.reason) );
     this.editor.onDidChangeCursorSelection((event) => this.editorViewChanged(event.reason) );
     this.editor.onDidScrollChange(() => this.editorViewChanged(null) );
-    // give appropriate message when in readOnly state
+    // Provide appropriate message when in readOnly state
     this.editor.onDidAttemptReadOnlyEdit(() => {
       const message = this.userEditing ? `Wait for ${this.userEditing} to finish typing` : 'Loading remote document...';
       this.tooltipMessage?.showMessage(message, this.editor.getPosition());
     });
     this.editor.onDidChangeModelContent((event) => {
-      if (event.isFlush || this.applyingEdits) { // only respond to local/user-made changes
-        console.log("flush");
-        this.previousMarkdown = this.markdown;
+      if (event.isFlush || this.applyingRemoteEdits) { // Only respond to local user changes
         return;
       }
-      // const diffs = this.diffPatcher.diff_main(this.previousMarkdown, this.markdown);
-      // const patches = this.diffPatcher.patch_make(diffs);
-      const patches = this.diffPatcher.patch_make(this.previousMarkdown, this.markdown);
-      console.log(patches);
-      // const model: DocumentUpdates = {
-      //   changes: event.changes,
-      //   position: this.getNewCursorPosition(event.changes),
-      //   patches: patches
-      // };
       this.editing();
-      // this.textEditsSource.next(model);
-      const model: EditorStatus = {
-        markdown: this.markdown,
-        position: this.getNewCursorPosition(event.changes)
-      };
-      this.editorChangeStatus$.next(model);
+      this.edits.editsQueue.push(event.changes);
+      this.edits.position = this.getNewCursorPosition(event.changes);
+      this.edits.timestamp = this.editStartTime;
+      this.editsSubject$.next(this.edits);
     });
-    // keep track of focus status to reset properly 
+    // Keep track of focus status to reset properly 
     this.editor.onDidFocusEditorWidget(() => this.editorFocused = true );
     this.editor.onDidBlurEditorWidget(() => this.editorFocused = false );
   }
 
-  private createPatchModel() {
-    const patches = this.diffPatcher.patch_make(this.previousMarkdown, this.markdown);
-    return patches;
+  /* Check if local changes have priority over incoming remote changes. 
+    Attempt to fairly choose first to begin typing. Use Profile ID for 
+    deterministic tie breaker across browsers. */
+  private hasPriority(actor: Actor, remoteStartTime: number, ): boolean {
+    if (this.editStartTime < remoteStartTime)
+      return true;
+    else if (this.editStartTime > remoteStartTime)
+      return false
+    else
+      return (this.notifier.getProfileId() < actor.id);
   }
 
-  private applyPatches(patches) {
-    const result = this.diffPatcher.patch_apply(patches, this.markdown);
-    console.log(result);
-    if (result[1][0] == false)
-      alert(result);
-    this.markdown = result[0];
-    this.previousMarkdown = this.markdown;
-  }
-
-  private applyRemoteEdit(changes: Changes) {
-    this.applyingEdits = true;
+  private applyRemoteEdit(allChanges: Array<ChangeEvent>) {
+    this.applyingRemoteEdits = true;
+    allChanges.forEach(changes => {
     this.editor.getModel().applyEdits(changes);
-    this.applyingEdits = false;
+    });
+    this.applyingRemoteEdits = false;
   }
 
   private saveEditorViewState() {
@@ -342,7 +320,6 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     if (this.editorFocused)
       this.editor?.focus();
     this.tooltipMessage = this.editor.getContribution('editor.contrib.messageController');
-    // this.setRemoteCursor();
   }
   
   private editorViewChanged(reason?: CursorChangeReason) {
@@ -353,42 +330,136 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   private setReadOnly(readOnly: boolean) {
+    if (this.readOnly != readOnly) {
     this.readOnly = readOnly;
     this.updateEditorOptions();
+  }
   }
 
   private updateEditorOptions(): void {
     const changedOptions = {
       theme: this.codeTheme,
       readOnly: this.readOnly
-    }
-    this.editorOptions = { ...this.editorOptions, ...changedOptions }
+    };
+    this.editorOptions = { ...this.editorOptions, ...changedOptions };
   }
 
   private resetRemoteEditor() {
-    this.documentMessage = '';
     this.userEditing = '';
+    this.statusMessage = '';
     this.setReadOnly(false);
     clearTimeout(this.lockedMonitor);
   }
 
-  private getNewCursorPosition(changes: Changes): Position {
+  private getNewCursorPosition(changes: ChangeEvent): Position {
     const change = changes[0];
     const newLineNumber = change.range.startLineNumber;
     const newColumn = change.range.startColumn + change.text.length;
     return new Position(newLineNumber, newColumn);
   }
   
+  private generateTimestamp() {
+    const date = new Date();
+    console.log(date.getTime());
+    return date.getTime();
+  }
   private setRemoteCursor() {
     if (this.tooltipMessage && this.remoteCursor && this.userEditing)
         this.tooltipMessage.showMessage(this.userEditing, this.remoteCursor);
+
+  private mapToDocumentEditsDTO(edits: DocumentEdits) {
+    var editsQueue = []
+    edits.editsQueue.forEach(changes => {
+      editsQueue.push(this.mapToChangesDTO(changes));
+    });
+    const editsDTO: DocumentEditsDTO  = {
+      q: editsQueue,
+      p: this.mapToPositionDTO(edits.position),
+      t: edits.timestamp
+    };
+    return editsDTO;
   }
+
+  private mapToChangesDTO(changes: ChangeEvent) {
+    var changesDTO = [];
+    changes.forEach(change => {
+      changesDTO.push({
+        r: this.mapToRangeDTO(change.range),
+        t: change.text
+      })
+    });
+    return changesDTO;
+  }
+
+  private mapToPositionDTO(position: Position) {
+    const positionDTO = {
+      l: position.lineNumber,
+      c: position.column
+    }
+    return positionDTO;
+  }
+
+  private mapToRangeDTO(range: TextRange) {
+    return {
+      sL: range.startLineNumber,
+      sC: range.startColumn,
+      eL: range.endLineNumber,
+      eC: range.endColumn
+    };
+  }
+
+  private mapFromDocumentEditsDTO(editsDTO: any): DocumentEdits {
+    var editsQueue = []
+    editsDTO.q.forEach(changes => {
+      editsQueue.push(this.mapFromChangesDTO(changes));
+    });
+    const documentEdits: DocumentEdits = {
+      editsQueue: editsQueue,
+      position: this.mapFromPositionDTO(editsDTO.p),
+      timestamp: editsDTO.t
+    };
+    return documentEdits;
+  }
+  
+  private mapFromChangesDTO(changesDTO: any): ChangeEvent {
+    var changes: ChangeEvent = [];
+    changesDTO.forEach(change => {
+      changes.push({
+        range: this.mapFromRangeDTO(change.r),
+        rangeOffset: change.o,
+        rangeLength: change.l,
+        text: change.t
+      })
+    });
+    return changes;
+  }
+
+  private mapFromPositionDTO(positionDTO: any): Position {
+    return new Position(positionDTO.l, positionDTO.c);
+  }
+
+  private mapFromRangeDTO(rangeDTO: any): TextRange {
+    const range: TextRange = {
+      startLineNumber: rangeDTO.sL,
+      startColumn: rangeDTO.sC,
+      endLineNumber: rangeDTO.eL,
+      endColumn: rangeDTO.eC
+    }
+    return range;
+  }
+  }
+
+export interface DocumentEdits {
+  editsQueue: Array<ChangeEvent>;
+  position?: Position;
+  timestamp?: number;
 }
 
-export interface DocumentUpdates {
-  changes: Changes;
-  position: Position;
-  patches: any;
+// Data Transfer Object to efficiently transmit updates
+export interface DocumentEditsDTO {
+  q: any; // editsQueue DTO
+  p: any; // position DTO
+  t: number; // timestamp
 }
 
 export interface EditorStatus {

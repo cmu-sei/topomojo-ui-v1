@@ -160,11 +160,7 @@ export class NotificationService {
                     (msg) => { this.globalSource.next(msg); }
                 );
                 this.connection.on('DocumentEvent',
-                    (msg) => { 
-                        if (msg.action === 'DOCUMENT.UPDATED') { this.setDocumentActorEditing(msg, true); }
-                        if (msg.action === 'DOCUMENT.IDLE') { this.setDocumentActorEditing(msg, false); }
-                        this.documentSource.next(msg); 
-                    }
+                    (msg) => { this.documentSource.next(msg); }
                 );
                 this.log('sigr: invoking Listen');
                 this.connection.invoke('Listen', this.key).then(
@@ -212,14 +208,15 @@ export class NotificationService {
         this.connection.invoke('Typing', this.key, v);
     }
 
-    editing(v: boolean): void {
-        this.connection.invoke('Editing', this.key, v);
-    }
     edited(changes: any): void {
         this.connection.invoke('Edited', this.key, changes);
     }
     sendChat(text: string): void {
         this.connection.invoke('Post', this.key, text);
+    }
+
+    getProfileId(): string {
+        return this.profile.globalId;
     }
 
     private setActor(event: HubEvent): void {
@@ -237,14 +234,6 @@ export class NotificationService {
         const actor = this.actors.find(a => a.id === event.actor.id);
         if (actor.typing !== val) {
             actor.typing = val;
-            this.actors$.next(this.actors);
-        }
-    }
-
-    private setDocumentActorEditing(event: HubEvent, val: boolean): void {
-        const actor = this.actors.find(a => a.id === event.actor.id);
-        if (actor.editing !== val) {
-            actor.editing = val;
             this.actors$.next(this.actors);
         }
     }
@@ -268,7 +257,6 @@ export interface Actor {
     name: string;
     online?: boolean;
     typing?: boolean;
-    editing?: boolean;
 }
 
 export interface ChatMessage {
