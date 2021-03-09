@@ -13,17 +13,6 @@ import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
 import * as monaco from 'monaco-editor';
 
-// Monaco aliases 
-import Position = monaco.Position;
-import CursorChangeReason = monaco.editor.CursorChangeReason;
-type TextRange = monaco.IRange;
-type Editor = monaco.editor.ICodeEditor;
-type EditorModel = monaco.editor.ITextModel;
-type Change =  monaco.editor.IModelContentChange;
-type ChangeEvent = Array<Change>; // Multiple locations can be changed at once
-type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions;
-type EditorViewState = monaco.editor.ICodeEditorViewState;
-
 @Component({
   selector: 'topomojo-document-editor',
   templateUrl: 'document-editor.component.html',
@@ -58,8 +47,10 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   };
   timeLastSaved: string = '';
   statusMessage?: string;
-  editStartTime?: number;
   connectionLoading: boolean = true;
+  private editStartTime?: number;
+  private lastOutTime?: number;
+  private userTimestamps: UserSyncMap = {};
   private currentlyEditing: boolean = false;
   private editingMonitor: any;
   private lockedMonitor: any;
@@ -67,12 +58,15 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private editsSubject$: Subject<DocumentEdits> = new Subject<DocumentEdits>();
   private dirty: boolean;
   private applyingRemoteEdits: boolean = false;
+  private appliedEditsLog: Array<AppliedEditOffset> = [];
   private editorViewState?: EditorViewState;
   private editorFocused: boolean = true;
   private userEditing?: string;
   private tooltipMessage? = null;
   remoteCursor?: Position = null; // NOT USED
   private saveInterval: Subscription;
+  private editorEol? = null;
+  
 
   constructor(
     private service: DocumentService,
@@ -120,41 +114,50 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         }
       }),
       this.editsSubject$.pipe(
-          filter(() => !(this.readOnly || this.connectionLoading)),
-        auditTime(300), // Send updates at most every 300ms
-        ).subscribe(
+        filter(() => !(this.readOnly || this.connectionLoading)),
+        auditTime(800), // Send updates at most every 300ms
+      ).subscribe(
         (edits: DocumentEdits) => {
-          this.notifier.edited(this.mapToDocumentEditsDTO(edits)); 
+          console.log("edits about to send",edits.editsQueue, edits);
+          // this.notifier.edited(this.mapToDocumentEditsDTO(edits)); 
+          this.notifier.edited(edits);
           this.edits.editsQueue = [];
+          console.log("SENT update @", edits.timestamp);
         }
       ),
       this.notifier.documentEvents.subscribe(
         (event: HubEvent) => {
+          console.log(event);
           if (event.action == 'DOCUMENT.SAVED') { 
             this.timeLastSaved = event.model.whenSaved;
             if (!this.currentlyEditing && (this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
-              this.markdown = event.model.text; // Syncrhonize entire document from server copy
-              this.render();
+              // this.markdown = event.model.text; // Syncrhonize entire document from server copy when available
+              // this.render();
             }
             this.resetRemoteEditor(); // Unlock once remote edits are saved
           } else if (event.action == 'DOCUMENT.UPDATED') {
-            const model = this.mapFromDocumentEditsDTO(event.model);
-            if (this.currentlyEditing) { // Conflict
-              if (this.hasPriority(event.actor, model.timestamp)) { 
-                return; // Don't apply changes and don't lock document
-              } else {
-                this.currentlyEditing = false;
-                this.editStartTime = null;
-                clearTimeout(this.editingMonitor);
-              }
-            }
+            // console.log(event.model);
+            // const model = this.mapFromDocumentEditsDTO(event.model);
+            const model: DocumentEdits = event.model;
+            // if (this.currentlyEditing) { // Conflict
+            //   if (this.hasPriority(event.actor, model.timestamp)) { 
+            //     return; // Don't apply changes and don't lock document
+            //   } else {
+            //     this.currentlyEditing = false;
+            //     this.editStartTime = null;
+            //     clearTimeout(this.editingMonitor);
+            //   }
+            // }
+            this.storeTransformations(model.editsQueue, event.actor.id);
             this.remoteEditingStarted();
             this.userEditing = event.actor.name;
             this.statusMessage = this.userEditing + ' is editing...';
-            this.setReadOnly(true);
-            this.applyRemoteEdit(model.editsQueue);
+            // this.setReadOnly(true);
+            console.log("Applied edits before applying remote change", this.appliedEditsLog);
+            this.applyRemoteEdit(model, event.actor.id);
             this.remoteCursor = model.position;
             this.render();
+            this.userTimestamps[event.actor.id] = model.timestamp;
           }
         }
       )
@@ -216,9 +219,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         (text: string) => {
           this.markdown = text;
           this.render();
-      this.resetRemoteEditor();
+          this.resetRemoteEditor();
           console.log({t:"reloaded document from disk"});
-  }
+        }
       );
     }, 7000); 
   }
@@ -267,6 +270,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.restoreEditorViewState();
     else
       this.saveEditorViewState();
+    this.editor.getModel().setEOL(monaco.editor.EndOfLineSequence.LF); // must be consistent across browsers
+    this.editorEol = this.editor.getModel().getEOL();
     // Save and restore editor view state when changed
     this.editor.onDidChangeCursorPosition((event) => this.editorViewChanged(event.reason) );
     this.editor.onDidChangeCursorSelection((event) => this.editorViewChanged(event.reason) );
@@ -281,9 +286,19 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         return;
       }
       this.editing();
-      this.edits.editsQueue.push(event.changes);
+      const timestamp = this.generateTimestamp();
+      const changeEvent = {
+        changes: event.changes, 
+        timestamp: timestamp,
+        userTimestamps: {...this.userTimestamps}
+      };
+      this.edits.editsQueue.push(changeEvent);
       this.edits.position = this.getNewCursorPosition(event.changes);
-      this.edits.timestamp = this.editStartTime;
+      // this.edits.timestamp = this.editStartTime;
+      this.edits.timestamp = timestamp;
+      this.edits.userTimestamps = this.userTimestamps;
+      this.storeTransformations([changeEvent], this.notifier.getProfileId());
+      console.log("Applied edits after storing", timestamp, this.appliedEditsLog);
       this.editsSubject$.next(this.edits);
     });
     // Keep track of focus status to reset properly 
@@ -303,12 +318,75 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       return (this.notifier.getProfileId() < actor.id);
   }
 
-  private applyRemoteEdit(allChanges: Array<ChangeEvent>) {
+  private applyRemoteEdit(changeModel: DocumentEdits, uid: string) {
     this.applyingRemoteEdits = true;
-    allChanges.forEach(changes => {
-    this.editor.getModel().applyEdits(changes);
+    changeModel.editsQueue.forEach(changeEvent => {
+      console.log("about to transform remote edits", changeModel);
+      var transformedChanges = this.applyTransformations(changeEvent, uid);
+      this.editor.getModel().applyEdits(transformedChanges);
     });
     this.applyingRemoteEdits = false;
+  }
+  
+  private storeTransformations(edits: Array<TimedChangeEvent>, uid: string) {
+    console.log("Storing transforms");
+    edits.forEach(changeEvent => {
+      changeEvent.changes.forEach(change => {
+        var selectionHeight = change.range.endLineNumber - change.range.startLineNumber;
+        // console.log(selectionHeight);
+        // console.log(change);
+        console.log({eol:this.editorEol, code: this.editorEol.charCodeAt(0)});
+        var newLinesAdded = change.text.split(this.editorEol).length - 1;
+        var delta = newLinesAdded - selectionHeight;
+        console.log("Delta", delta);
+        if (delta != 0) {
+          this.appliedEditsLog.push({
+            uid: uid,
+            timestamp: changeEvent.timestamp,
+            lineNumber: change.range.startLineNumber,
+            delta: delta
+          })
+        }
+      });
+    })
+  }
+
+  private applyTransformations(changeEvent: TimedChangeEvent, uid: string) {
+    console.log("applying transforms");
+    var result: ChangeEvent = [];
+    changeEvent.changes.forEach(incomingChange => {
+      var startLineNumber = incomingChange.range.startLineNumber;
+      // get offset
+      var lineOffset = 0;
+      this.appliedEditsLog.forEach(appliedEdit => {
+        var lastHeardFromUser = changeEvent.userTimestamps[appliedEdit.uid] ?? 0;
+        if (appliedEdit.uid != uid &&
+            appliedEdit.timestamp > lastHeardFromUser &&
+            appliedEdit.lineNumber < startLineNumber + lineOffset) {
+              // console.log("apply offset!");
+              // console.log({
+              //   e: previousEdit,
+              //   c: incomingChange
+              // });
+              lineOffset += appliedEdit.delta;
+        }
+      });
+      var modifiedRange = {
+        startLineNumber: incomingChange.range.startLineNumber + lineOffset,
+        startColumn: incomingChange.range.startColumn,
+        endLineNumber: incomingChange.range.endLineNumber + lineOffset,
+        endColumn: incomingChange.range.endColumn
+      }
+      console.log("incomimg:", incomingChange.range);
+      console.log("new range", modifiedRange);
+      result.push({
+        range: modifiedRange,
+        rangeOffset: incomingChange.rangeOffset,
+        rangeLength: incomingChange.rangeLength,
+        text: incomingChange.text
+      })
+    });
+    return result;
   }
 
   private saveEditorViewState() {
@@ -331,9 +409,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
 
   private setReadOnly(readOnly: boolean) {
     if (this.readOnly != readOnly) {
-    this.readOnly = readOnly;
-    this.updateEditorOptions();
-  }
+      this.readOnly = readOnly;
+      this.updateEditorOptions();
+    }
   }
 
   private updateEditorOptions(): void {
@@ -357,25 +435,24 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     const newColumn = change.range.startColumn + change.text.length;
     return new Position(newLineNumber, newColumn);
   }
-  
+
   private generateTimestamp() {
     const date = new Date();
-    console.log(date.getTime());
+    console.log("Time stamp generated", date.getTime());
     return date.getTime();
   }
-  private setRemoteCursor() {
-    if (this.tooltipMessage && this.remoteCursor && this.userEditing)
-        this.tooltipMessage.showMessage(this.userEditing, this.remoteCursor);
+
 
   private mapToDocumentEditsDTO(edits: DocumentEdits) {
     var editsQueue = []
-    edits.editsQueue.forEach(changes => {
-      editsQueue.push(this.mapToChangesDTO(changes));
+    edits.editsQueue.forEach(changeEvent => {
+      editsQueue.push(this.mapToChangesDTO(changeEvent.changes));
     });
     const editsDTO: DocumentEditsDTO  = {
       q: editsQueue,
       p: this.mapToPositionDTO(edits.position),
-      t: edits.timestamp
+      t: edits.timestamp,
+      u: this.userTimestamps
     };
     return editsDTO;
   }
@@ -416,7 +493,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     const documentEdits: DocumentEdits = {
       editsQueue: editsQueue,
       position: this.mapFromPositionDTO(editsDTO.p),
-      timestamp: editsDTO.t
+      timestamp: editsDTO.t,
+      userTimestamps: editsDTO.u
     };
     return documentEdits;
   }
@@ -447,12 +525,24 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     }
     return range;
   }
-  }
+}
+
+// Monaco aliases 
+import Position = monaco.Position;
+import CursorChangeReason = monaco.editor.CursorChangeReason;
+type TextRange = monaco.IRange;
+type Editor = monaco.editor.ICodeEditor;
+type EditorModel = monaco.editor.ITextModel;
+type Change =  monaco.editor.IModelContentChange;
+type ChangeEvent = Array<Change>; // Multiple locations can be changed at once
+type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions;
+type EditorViewState = monaco.editor.ICodeEditorViewState;
 
 export interface DocumentEdits {
-  editsQueue: Array<ChangeEvent>;
+  editsQueue: Array<TimedChangeEvent>;
   position?: Position;
   timestamp?: number;
+  userTimestamps?: any;
 }
 
 // Data Transfer Object to efficiently transmit updates
@@ -460,9 +550,22 @@ export interface DocumentEditsDTO {
   q: any; // editsQueue DTO
   p: any; // position DTO
   t: number; // timestamp
+  u: any;
 }
 
-export interface EditorStatus {
-  markdown: string;
-  position: Position;
+export interface AppliedEditOffset {
+  uid: string;
+  timestamp: number;
+  lineNumber: number;
+  delta: number;
+}
+
+export interface UserSyncMap {
+  [uid: string] : number;
+}
+
+export interface TimedChangeEvent {
+  changes: ChangeEvent;
+  timestamp: number;
+  userTimestamps?: any;
 }
