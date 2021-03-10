@@ -160,7 +160,11 @@ export class NotificationService {
                     (msg) => { this.globalSource.next(msg); }
                 );
                 this.connection.on('DocumentEvent',
-                    (msg) => { this.documentSource.next(msg); }
+                    (msg) => { 
+                        if (msg.action === 'DOCUMENT.UPDATED') { this.setDocumentActorEditing(msg, true); }
+                        if (msg.action === 'DOCUMENT.IDLE') { this.setDocumentActorEditing(msg, false); }
+                        this.documentSource.next(msg); 
+                    }
                 );
                 this.log('sigr: invoking Listen');
                 this.connection.invoke('Listen', this.key).then(
@@ -208,6 +212,10 @@ export class NotificationService {
         this.connection.invoke('Typing', this.key, v);
     }
 
+    editing(v: boolean): void {
+        this.connection.invoke('Editing', this.key, v);
+    }
+
     edited(changes: any): void {
         this.connection.invoke('Edited', this.key, changes);
     }
@@ -238,6 +246,15 @@ export class NotificationService {
         }
     }
 
+    private setDocumentActorEditing(event: HubEvent, val: boolean): void {
+        const actor = this.actors.find(a => a.id === event.actor.id);
+        if (actor.editing !== val) {
+            actor.editing = val;
+            this.actors$.next(this.actors);
+        }
+    }
+
+
     log(msg): void {
         if (this.debug) {
             console.log(msg);
@@ -257,6 +274,7 @@ export interface Actor {
     name: string;
     online?: boolean;
     typing?: boolean;
+    editing?: boolean;
 }
 
 export interface ChatMessage {

@@ -7,7 +7,7 @@ import { Converter } from 'showdown/dist/showdown';
 import { DocumentService } from '../../../api/document.service';
 import { SettingsService } from '../../../svc/settings.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { catchError, finalize, auditTime, filter } from 'rxjs/operators';
+import { catchError, finalize, auditTime, filter, distinctUntilChanged } from 'rxjs/operators';
 import { of, interval, Subscription, Subject } from 'rxjs';
 import { ToolbarService } from '../../svc/toolbar.service';
 import { MatDrawer } from '@angular/material/sidenav';
@@ -52,6 +52,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private lastOutTime?: number;
   private userTimestamps: UserSyncMap = {};
   private currentlyEditing: boolean = false;
+  private editingStatus$: Subject<boolean> = new Subject<boolean>();
   private editingMonitor: any;
   private lockedMonitor: any;
   private edits: DocumentEdits = {editsQueue: []};
@@ -108,11 +109,17 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         this.actors = actors;
         if (this.actors.length == 0)
           return;
+        this.setCollaboratorsMessage();
         if (this.connectionLoading) {
           this.connectionLoading = false
           this.setReadOnly(false);
         }
       }),
+      this.editingStatus$.subscribe(
+        (isEditing: boolean) => {
+          this.notifier.editing(isEditing);
+        }
+      ),
       this.editsSubject$.pipe(
         filter(() => !(this.readOnly || this.connectionLoading)),
         auditTime(800), // Send updates at most every 300ms
@@ -130,11 +137,12 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
           console.log(event);
           if (event.action == 'DOCUMENT.SAVED') { 
             this.timeLastSaved = event.model.whenSaved;
-            if (!this.currentlyEditing && (this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
-              // this.markdown = event.model.text; // Syncrhonize entire document from server copy when available
-              // this.render();
+            if (this.statusMessage == '' && (this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
+              this.markdown = event.model.text; // Syncrhonize entire document from server copy when available
+              this.render();
+              // alert("Needed to reset doc");
             }
-            this.resetRemoteEditor(); // Unlock once remote edits are saved
+            // this.resetRemoteEditor(); // Unlock once remote edits are saved
           } else if (event.action == 'DOCUMENT.UPDATED') {
             // console.log(event.model);
             // const model = this.mapFromDocumentEditsDTO(event.model);
@@ -149,9 +157,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
             //   }
             // }
             this.storeTransformations(model.editsQueue, event.actor.id);
-            this.remoteEditingStarted();
-            this.userEditing = event.actor.name;
-            this.statusMessage = this.userEditing + ' is editing...';
+            // this.remoteEditingStarted();
+            // this.userEditing = event.actor.name;
+            // this.statusMessage = this.userEditing + ' is editing...';
             // this.setReadOnly(true);
             console.log("Applied edits before applying remote change", this.appliedEditsLog);
             this.applyRemoteEdit(model, event.actor.id);
@@ -198,10 +206,13 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.currentlyEditing = true;
       this.editStartTime = this.generateTimestamp();
     }
+    this.setCollaboratorsMessage();
     clearTimeout(this.editingMonitor);
     this.editingMonitor = setTimeout(() => {
       this.currentlyEditing = false;
+      this.editingStatus$.next(false);
       this.editStartTime = null;
+      this.setCollaboratorsMessage();
       this.save(true);
     }, 3000);
   }
@@ -330,25 +341,34 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   
   private storeTransformations(edits: Array<TimedChangeEvent>, uid: string) {
     console.log("Storing transforms");
+    var newLog = this.pruneTransformations();
     edits.forEach(changeEvent => {
       changeEvent.changes.forEach(change => {
         var selectionHeight = change.range.endLineNumber - change.range.startLineNumber;
-        // console.log(selectionHeight);
+        var startCol = (selectionHeight == 0) ? change.range.startColumn : 0;
+        var selectionWidth = change.range.endColumn - startCol;
+        // var lastColWidth = (selectionHeight == 0) ? selectionWidth : change.range.endColumn;
+        console.log(selectionHeight, selectionWidth);
         // console.log(change);
-        console.log({eol:this.editorEol, code: this.editorEol.charCodeAt(0)});
-        var newLinesAdded = change.text.split(this.editorEol).length - 1;
-        var delta = newLinesAdded - selectionHeight;
-        console.log("Delta", delta);
-        if (delta != 0) {
-          this.appliedEditsLog.push({
+        var lines = change.text.split(this.editorEol);
+        var newLinesAdded = lines.length - 1;
+        var newColsAdded = lines[lines.length - 1].length;
+        var lineDelta = newLinesAdded - selectionHeight;
+        var colDelta = newColsAdded - selectionWidth;
+        console.log("Delta", lineDelta);
+        // if (lineDelta != 0) {
+          newLog.push({
             uid: uid,
             timestamp: changeEvent.timestamp,
             lineNumber: change.range.startLineNumber,
-            delta: delta
-          })
-        }
+            colNumber: startCol,
+            lineDelta: lineDelta,
+            colDelta: colDelta
+          });
+        // }
       });
     })
+    this.appliedEditsLog = newLog;
   }
 
   private applyTransformations(changeEvent: TimedChangeEvent, uid: string) {
@@ -356,26 +376,39 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     var result: ChangeEvent = [];
     changeEvent.changes.forEach(incomingChange => {
       var startLineNumber = incomingChange.range.startLineNumber;
+      var startColNumber = incomingChange.range.startColumn;
       // get offset
       var lineOffset = 0;
+      var colOffset = 0;
       this.appliedEditsLog.forEach(appliedEdit => {
         var lastHeardFromUser = changeEvent.userTimestamps[appliedEdit.uid] ?? 0;
         if (appliedEdit.uid != uid &&
             appliedEdit.timestamp > lastHeardFromUser &&
-            appliedEdit.lineNumber < startLineNumber + lineOffset) {
+            appliedEdit.lineNumber <= startLineNumber + lineOffset) {
               // console.log("apply offset!");
               // console.log({
               //   e: previousEdit,
               //   c: incomingChange
               // });
-              lineOffset += appliedEdit.delta;
+              lineOffset += appliedEdit.lineDelta;
         }
+        if (appliedEdit.uid != uid &&
+          appliedEdit.timestamp > lastHeardFromUser &&
+          appliedEdit.lineNumber + appliedEdit.lineDelta == startLineNumber + lineOffset &&
+          appliedEdit.colNumber <= startColNumber + colOffset) {
+            // console.log("apply offset!");
+            // console.log({
+            //   e: previousEdit,
+            //   c: incomingChange
+            // });
+            colOffset += appliedEdit.colDelta;
+      }
       });
       var modifiedRange = {
         startLineNumber: incomingChange.range.startLineNumber + lineOffset,
-        startColumn: incomingChange.range.startColumn,
+        startColumn: incomingChange.range.startColumn + colOffset,
         endLineNumber: incomingChange.range.endLineNumber + lineOffset,
-        endColumn: incomingChange.range.endColumn
+        endColumn: incomingChange.range.endColumn + colOffset
       }
       console.log("incomimg:", incomingChange.range);
       console.log("new range", modifiedRange);
@@ -387,6 +420,17 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       })
     });
     return result;
+  }
+
+  private pruneTransformations() {
+    var recentTransformations = [];
+    var currentTime = this.generateTimestamp();
+    this.appliedEditsLog.forEach(edit => {
+      if (currentTime - edit.timestamp < 10_000) {
+        recentTransformations.push(edit);
+      }
+    });
+    return recentTransformations;
   }
 
   private saveEditorViewState() {
@@ -414,6 +458,23 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     }
   }
 
+  private setCollaboratorsMessage() {
+    var allEditors = this.actors.filter((a) => a.editing).map((a) => a.name ?? 'Anonymous');
+    // var verb = (this.currentlyEditing || remoteEditors.length > 0) ? "are editing..." : "is editing...";
+    var message = '';
+    var verb = 'are';
+    if (this.currentlyEditing) {
+      allEditors.unshift("You")
+    } else if (allEditors.length == 1) {
+      verb = 'is';
+    }
+    if (allEditors.length != 0) {
+      message = allEditors.join(' & ')
+      this.statusMessage = `${message} ${verb} editing...`
+    } else {
+      this.statusMessage = '';
+    }
+  }
   private updateEditorOptions(): void {
     const changedOptions = {
       theme: this.codeTheme,
@@ -557,7 +618,9 @@ export interface AppliedEditOffset {
   uid: string;
   timestamp: number;
   lineNumber: number;
-  delta: number;
+  colNumber: number;
+  lineDelta: number;
+  colDelta: number;
 }
 
 export interface UserSyncMap {
