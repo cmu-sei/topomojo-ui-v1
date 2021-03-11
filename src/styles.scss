@@ -93,3 +93,19 @@ $alt: cmu-dark-theme($primary, $accent, mat-palette($mat-amber));
 .mat-tooltip {
   color: black!important;
 }
+
+.editor-cursor { min-width: 2px; }
+.editor-selection { min-width: 8px; }
+.editor-cursor-between { margin-left: -1px; }
+.editor-sage { background: #33b679; }
+.editor-sage-light { background: #33b67944; }
+.editor-flamingo { background: #e67c73 }
+.editor-flamingo-light { background: #e67c7344 }
+.editor-grape { background: #8e24aa }
+.editor-grape-light { background: #8e24aa44 }
+.editor-blueberry { background: #3f51b5; }
+.editor-blueberry-light { background: #3f51b544; }
+.editor-banana { background: #f6c026 }
+.editor-banana-light { background: #f6c02644 }
+.editor-online { color: white }
+.editor-offline { color: black }

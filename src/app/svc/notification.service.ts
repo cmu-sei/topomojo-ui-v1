@@ -212,6 +212,10 @@ export class NotificationService {
         this.connection.invoke('Typing', this.key, v);
     }
 
+    cursorChanged(lines: any): void {
+        this.connection.invoke('CursorChanged', this.key, lines);
+    }
+
     editing(v: boolean): void {
         this.connection.invoke('Editing', this.key, v);
     }

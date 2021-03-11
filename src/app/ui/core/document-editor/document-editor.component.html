@@ -9,7 +9,7 @@
     <p>{{ docCurrentlyEdited() ? "Saving..." : timeLastSaved ? "Saved " + (timeLastSaved | shortdate) : '' }}</p>
   </div>
   <div *ngIf="key" class="presence-div">
-    <span *ngFor="let actor of actors" class="label label-default" [class.online]="actor.online">
+    <span *ngFor="let actor of actors" class="label label-default {{getUserColorClass(actor)}}">
       <mat-icon *ngIf="!actor.editing" inline="true">account_box</mat-icon>
       <mat-icon *ngIf="actor.editing"  inline="true">keyboard</mat-icon>
       {{actor.name || "Anonymous"}}
