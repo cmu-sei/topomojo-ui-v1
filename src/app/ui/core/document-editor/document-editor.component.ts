@@ -29,7 +29,6 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   markdown: string = '';
   rendered: string;
   editor?: Editor = null;
-  editorModel?: EditorModel = null;
   codeTheme: string = this.settingsSvc.localSettings.altTheme ? 'vs-dark' : 'vs-light';
   readOnly: boolean = true; // Initially locked until loaded
   editorOptions: EditorOptions = {
@@ -64,9 +63,10 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private saveInterval: Subscription;
   private editorEol? = null;
   private decorations = [];
-  private colors = ["sage", "flamingo", "grape", "blueberry", "banana"];
+  private colors = ["green", "purple ", "pride-yellow", "magenta", "sienna", "darkolive",  "cyan", "red", "brown", "seagreen ", "pink", "pride-red", "pride-orange", "teal"];
   private newColorIndex = 0;
   private remoteUsers = new Map<string, RemoteUserData>();
+  private cursorMonitor: any;
 
   constructor(
     private service: DocumentService,
@@ -106,24 +106,25 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       }),
       this.notifier.actors$.subscribe(actors => {
         this.actors = actors;
-        console.log("actors", ...actors);
         if (this.actors.length == 0)
           return;
         this.setCollaboratorsMessage();
         if (this.connectionLoading) { // TODO: handle case when someone is typing while user connects
           this.connectionLoading = false
           this.setReadOnly(false);
+          this.forwardCursorSelections(this.editor?.getSelections());
         }
       }),
-      this.editingStatus$.subscribe(
+      this.editingStatus$.pipe(
+        filter(() => !(this.readOnly || this.connectionLoading)),
+      ).subscribe(
         (isEditing: boolean) => {
           this.notifier.editing(isEditing);
         }
       ),
       this.selections$.pipe(
         filter(() => !(this.readOnly || this.connectionLoading)),
-        auditTime(1000), // Not essential, don't send updates frequently
-        distinctUntilChanged()
+        auditTime(1000) // Not essential, don't send updates frequently
       ).subscribe(
         (selections) => {
           this.notifier.cursorChanged(selections);
@@ -141,9 +142,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.notifier.documentEvents.subscribe(
         (event: HubEvent) => {
           console.log(event);
-          if (event.action == 'DOCUMENT.CURSOR') { 
+          if (event.action === 'DOCUMENT.CURSOR') { 
             this.updateRemotePositions(event.actor, event.model);
-          } else if (event.action == 'DOCUMENT.SAVED') { 
+          } else if (event.action === 'DOCUMENT.SAVED') { 
             this.timeLastSaved = event.model.whenSaved;
             // Syncrhonize entire document from server copy when needed & available
             if (this.statusMessage == '' && (this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
@@ -151,13 +152,20 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
               this.dirty = false;
               this.render();
             }
-          } else if (event.action == 'DOCUMENT.UPDATED') {
+          } else if (event.action === 'DOCUMENT.UPDATED') {
             const model: DocumentEdits = this.mapFromDocumentEditsDTO(event.model);
             const shortActorId = this.shortenId(event.actor.id);
             this.storeTransformations(model.editsQueue, shortActorId);
             this.applyRemoteEdits(model, shortActorId);
             this.render();
             this.userTimestamps[shortActorId] = model.timestamp;
+          }
+        }
+      ),
+      this.notifier.presenceEvents.subscribe(
+        (event: HubEvent) => {
+          if (event.action === 'PRESENCE.ARRIVED' || event.action === 'PRESENCE.GREETED') {
+            this.forwardCursorSelections(this.editor?.getSelections());
           }
         }
       )
@@ -174,8 +182,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   startListening(): void {
-    this.notifier.start(this.id);
-    console.log("started listening");
+    this.notifier.start(`${this.id}-doc`);
   }
 
   reRender() {
@@ -272,7 +279,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.editor.onDidChangeCursorPosition((event) => this.editorViewChanged(event.reason) );
     this.editor.onDidChangeCursorSelection((event) => {
       this.editorViewChanged(event.reason);
-      this.changedSelections(event);
+      this.changedCursorSelections(event);
     });
     this.editor.onDidScrollChange(() => this.editorViewChanged(null) );
     // Provide appropriate message when in readOnly state
@@ -291,25 +298,43 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
 
   private forwardContentChange(event) {
     this.editing();
-      const timestamp = this.generateTimestamp();
-      const changeEvent = {
-        changes: event.changes,
-        timestamp: timestamp,
-        userTimestamps: {...this.userTimestamps} // Copy, not reference 
-      };
-      this.edits.editsQueue.push(changeEvent);
-      this.edits.timestamp = timestamp;
-      this.storeTransformations([changeEvent], this.shortenId(this.notifier.getProfileId()));
-      this.editsSubject$.next(this.edits);
+    const timestamp = this.generateTimestamp();
+    const changeEvent = {
+      changes: event.changes,
+      timestamp: timestamp,
+      userTimestamps: {...this.userTimestamps} // Copy, not reference 
+    };
+    this.edits.editsQueue.push(changeEvent);
+    this.edits.timestamp = timestamp;
+    this.storeTransformations([changeEvent], this.shortenId(this.notifier.getProfileId()));
+    this.editsSubject$.next(this.edits);
+    clearTimeout(this.cursorMonitor);
+    this.cursorMonitor = setTimeout(() => {
+      this.forwardCursorSelections(this.editor?.getSelections());
+    }, 3000);
   }
 
   private applyRemoteEdits(changeModel: DocumentEdits, uid: string) {
     this.applyingRemoteEdits = true;
     changeModel.editsQueue.forEach(changeEvent => {
       var transformedChanges = this.applyTransformations(changeEvent, uid);
+      var position = this.editor.getPosition();
+      var shouldPreserveCursor = this.shouldPreserveCursor(transformedChanges, position);
       this.editor.getModel().applyEdits(transformedChanges);
+      if (shouldPreserveCursor)
+        this.editor.setPosition(position);
     });
     this.applyingRemoteEdits = false;
+  }
+
+  // For simple edits and selections, don't let remote users move cursor when at same position
+  private shouldPreserveCursor(changes: ChangeEvent, position: monaco.Position) {
+    var selections = this.editor.getSelections();
+    return (changes.length == 1 && selections.length == 1 &&
+        selections[0].startLineNumber == selections[0].endLineNumber &&
+        selections[0].startColumn == selections[0].endColumn &&
+        changes[0].range.startLineNumber == position.lineNumber &&
+        changes[0].range.startColumn == position.column);
   }
   
   // Store any applied edits locally as a log to derive transformations
@@ -339,26 +364,27 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   // Go through all applied edits and 
-  private applyTransformations(changeEvent: TimedChangeEvent, uid: string) {
+  private applyTransformations(incomingChangeEvent: TimedChangeEvent, uid: string) {
     var result: ChangeEvent = [];
-    changeEvent.changes.forEach(incomingChange => {
+    incomingChangeEvent.changes.forEach(incomingChange => {
       var startLineNumber = incomingChange.range.startLineNumber;
       var startColNumber = incomingChange.range.startColumn;
       var lineOffset = 0;
       var colOffset = 0;
       this.appliedEditsLog.forEach(appliedEdit => {
-        var lastHeardFromUser = changeEvent.userTimestamps[appliedEdit.uid] ?? 0;
-        if (appliedEdit.uid != uid &&
-            appliedEdit.timestamp > lastHeardFromUser &&
-            appliedEdit.lineNumber <= startLineNumber + lineOffset) {
-              lineOffset += appliedEdit.lineDelta;
-        }
-        if (appliedEdit.uid != uid &&
-          appliedEdit.timestamp > lastHeardFromUser &&
-          appliedEdit.lineNumber + appliedEdit.lineDelta == startLineNumber + lineOffset &&
-          appliedEdit.colNumber <= startColNumber + colOffset) {
+        var lastHeardFromUser = incomingChangeEvent.userTimestamps[appliedEdit.uid] ?? 0;
+        if (appliedEdit.uid != uid && // Not a previous edit from same user
+            appliedEdit.timestamp > lastHeardFromUser) { // Happened after last received update from that user
+          if (appliedEdit.lineNumber <= startLineNumber + lineOffset) { // On line number at or before new change
+            lineOffset += appliedEdit.lineDelta;
+          }
+          if (appliedEdit.lineNumber + appliedEdit.lineDelta == startLineNumber + lineOffset && // on same line as new change
+              (appliedEdit.colNumber < startColNumber + colOffset ||
+               (appliedEdit.colNumber == startColNumber + colOffset && 
+                appliedEdit.timestamp < incomingChangeEvent.timestamp))) {
             colOffset += appliedEdit.colDelta;
-      }
+          }
+        }
       });
       var modifiedRange = {
         startLineNumber: incomingChange.range.startLineNumber + lineOffset,
@@ -368,8 +394,6 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       }
       result.push({
         range: modifiedRange,
-        rangeOffset: incomingChange.rangeOffset,
-        rangeLength: incomingChange.rangeLength,
         text: incomingChange.text
       })
     });
@@ -409,19 +433,28 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.saveEditorViewState();
   }
 
-  private changedSelections(event: monaco.editor.ICursorSelectionChangedEvent) {
+  private changedCursorSelections(event: monaco.editor.ICursorSelectionChangedEvent) {
     if (event.reason == CursorChangeReason.ContentFlush)
       return
-    var selections = [];
-    [event.selection, ...event.secondarySelections].forEach(selection => {
-      selections.push({
+    const selections = [event.selection, ...event.secondarySelections]
+    this.forwardCursorSelections(selections);
+  }
+
+  private forwardCursorSelections(selections: monaco.Selection[]) {
+    if (selections == null || selections.length == 0) {
+      this.selections$.next([{sL: 1, sC: 1, eL: 1, eC: 1 }]);
+      return;
+    }
+    var selectionsDTO = [];
+    selections.forEach(selection => {
+      selectionsDTO.push({
         sL: selection.startLineNumber,
         sC: selection.startColumn,
         eL: selection.endLineNumber,
         eC: selection.endColumn
       });
     });
-    this.selections$.next(selections);
+    this.selections$.next(selectionsDTO);
   }
 
   private setReadOnly(readOnly: boolean) {
@@ -479,25 +512,36 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     var newDecorations = [];
     this.remoteUsers.forEach((user, id) => {
       user.positions.forEach(position => {
-        var className = `editor-${user.color}`;
+        var isSingleCursor = false;
+        var cursorColor = `editor-${user.color}`;
+        var cursorBetween = '';
         if (position.startLineNumber == position.endLineNumber && position.startColumn == position.endColumn) {
-          className += ' editor-cursor';
+          isSingleCursor = true;
+          var cursorType = 'editor-cursor';
           if (position.startColumn != 1)
-            className += ' editor-cursor-between'; // just cursor (no selection) position in between characters
+            cursorBetween = 'editor-cursor-between'; // just cursor (no selection) position in between characters
         } else {
-          className += '-light'; // selection => less opacity
-          className += ' editor-selection';
+          var cursorType = 'editor-selection';
         }
         newDecorations.push({
           range: position,
           options: {
             isWholeLine: false,
-            className: className,
-            glyphMarginHoverMessage: { value: `${user.name}` },
-            hoverMessage: { value: `${user.name}` },
+            className: `${cursorColor} ${cursorType} ${cursorBetween}`,
+            hoverMessage: { value: user.name },
             stickiness: 1
           }
         });
+        if (isSingleCursor) {
+          newDecorations.push({
+            range: position,
+            options: {
+              isWholeLine: false,
+              className: `${cursorColor} editor-top`,
+              stickiness: 1
+            }
+          });
+        }
       });
       
     });
@@ -569,8 +613,6 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     changeEventDTO.c.forEach(change => {
       changes.push({
         range: this.mapFromRangeDTO(change.r),
-        rangeOffset: change.o,
-        rangeLength: change.l,
         text: change.t
       })
     });
@@ -598,7 +640,7 @@ import CursorChangeReason = monaco.editor.CursorChangeReason;
 type TextRange = monaco.IRange;
 type Editor = monaco.editor.ICodeEditor;
 type EditorModel = monaco.editor.ITextModel;
-type Change =  monaco.editor.IModelContentChange;
+type Change =  monaco.editor.ISingleEditOperation;
 type ChangeEvent = Array<Change>; // Multiple locations can be changed at once
 type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions;
 type EditorViewState = monaco.editor.ICodeEditorViewState;
