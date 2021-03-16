@@ -67,6 +67,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private newColorIndex = 0;
   private remoteUsers = new Map<string, RemoteUserData>();
   private cursorMonitor: any;
+  private startPositions = new Map<string, monaco.Position>();
 
   constructor(
     private service: DocumentService,
@@ -141,7 +142,6 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       ),
       this.notifier.documentEvents.subscribe(
         (event: HubEvent) => {
-          console.log(event);
           if (event.action === 'DOCUMENT.CURSOR') { 
             this.updateRemotePositions(event.actor, event.model);
           } else if (event.action === 'DOCUMENT.SAVED') { 
@@ -208,6 +208,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.editingMonitor = setTimeout(() => {
       this.currentlyEditing = false;
       this.editingStatus$.next(false);
+      this.startPositions.clear();
       this.setCollaboratorsMessage();
       this.save(true);
     }, 3000);
@@ -302,7 +303,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     const changeEvent = {
       changes: event.changes,
       timestamp: timestamp,
-      userTimestamps: {...this.userTimestamps} // Copy, not reference 
+      userTimestamps: {...this.userTimestamps}, // Copy, not reference 
+      startPosition: this.getStartPosition(event.changes)
     };
     this.edits.editsQueue.push(changeEvent);
     this.edits.timestamp = timestamp;
@@ -320,14 +322,14 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       var transformedChanges = this.applyTransformations(changeEvent, uid);
       var position = this.editor.getPosition();
       var shouldPreserveCursor = this.shouldPreserveCursor(transformedChanges, position);
-      this.editor.getModel().applyEdits(transformedChanges);
+      this.editor.getModel().applyEdits(transformedChanges); // TODO: use returned undo operation to store/modify so undo stack is not messed up
       if (shouldPreserveCursor)
         this.editor.setPosition(position);
     });
     this.applyingRemoteEdits = false;
   }
 
-  // For simple edits and selections, don't let remote users move cursor when at same position
+  /* For simple edits and selections, don't let remote users move cursor when at same position */
   private shouldPreserveCursor(changes: ChangeEvent, position: monaco.Position) {
     var selections = this.editor.getSelections();
     return (changes.length == 1 && selections.length == 1 &&
@@ -337,13 +339,13 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         changes[0].range.startColumn == position.column);
   }
   
-  // Store any applied edits locally as a log to derive transformations
+  /* Store any applied edits locally as a log to derive transformations */
   private storeTransformations(edits: Array<TimedChangeEvent>, uid: string) {
     var newLog = this.pruneTransformations();
     edits.forEach(changeEvent => {
       changeEvent.changes.forEach(change => {
         var selectionHeight = change.range.endLineNumber - change.range.startLineNumber;
-        var startCol = (selectionHeight == 0) ? change.range.startColumn : 0;
+        var startCol = (selectionHeight == 0) ? change.range.startColumn : 1;
         var selectionWidth = change.range.endColumn - startCol;
         var lines = change.text.split(this.editorEol);
         var newLinesAdded = lines.length - 1;
@@ -356,7 +358,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
           lineNumber: change.range.startLineNumber,
           colNumber: startCol,
           lineDelta: lineDelta,
-          colDelta: colDelta
+          colDelta: colDelta,
+          startPosition: changeEvent.startPosition
         });
       });
     })
@@ -366,6 +369,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   // Go through all applied edits and 
   private applyTransformations(incomingChangeEvent: TimedChangeEvent, uid: string) {
     var result: ChangeEvent = [];
+    const ignoreStartPosition = incomingChangeEvent.changes.length > 1;
     incomingChangeEvent.changes.forEach(incomingChange => {
       var startLineNumber = incomingChange.range.startLineNumber;
       var startColNumber = incomingChange.range.startColumn;
@@ -379,9 +383,12 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
             lineOffset += appliedEdit.lineDelta;
           }
           if (appliedEdit.lineNumber + appliedEdit.lineDelta == startLineNumber + lineOffset && // on same line as new change
-              (appliedEdit.colNumber < startColNumber + colOffset ||
-               (appliedEdit.colNumber == startColNumber + colOffset && 
-                appliedEdit.timestamp < incomingChangeEvent.timestamp))) {
+              (appliedEdit.colNumber < startColNumber + colOffset || // applied column before incoming column 
+               (appliedEdit.colNumber == startColNumber + colOffset && // OR same
+                appliedEdit.timestamp < incomingChangeEvent.timestamp)) && // but applied happened first
+              ignoreStartPosition || (appliedEdit.startPosition.isBefore(incomingChangeEvent.startPosition) || // started typing position of applied is before incoming
+                (appliedEdit.startPosition.equals(incomingChangeEvent.startPosition) && // OR same 
+                appliedEdit.timestamp < incomingChangeEvent.timestamp))) { // but applied happened first
             colOffset += appliedEdit.colDelta;
           }
         }
@@ -409,6 +416,24 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       }
     });
     return recentTransformations;
+  }
+
+  // TODO: Finish this to find positions better 
+  private getStartPosition(changes: ChangeEvent) {
+    var change = changes[0];
+    var length = change.range.startLineNumber == change.range.endLineNumber ? change.text.length : 0;
+    var line = change.range.startLineNumber;
+    var col = change.range.startColumn;
+    var before = `${line},${col-1}`;
+    if (this.startPositions.has(before))
+      var result = this.startPositions.get(before);
+    else
+      var result = new monaco.Position(line, col);
+    this.startPositions.set(`${line},${col}`, result);
+    if (length != 0)
+      this.startPositions.set(`${line},${col+length}`, result);
+    return result;
+
   }
 
   private shortenId(id: string) {
@@ -480,6 +505,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       this.statusMessage = '';
     }
   }
+
   private updateEditorOptions(): void {
     const changedOptions = {
       theme: this.codeTheme,
@@ -582,7 +608,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     const ChangeEventDTO = {
       c: changesDTO,
       t: changeEvent.timestamp,
-      u: changeEvent.userTimestamps
+      u: changeEvent.userTimestamps,
+      s: changeEvent.startPosition // TODO: shorten this
     };
     return ChangeEventDTO;
   }
@@ -619,7 +646,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     const changeEvent = {
       changes: changes,
       timestamp: changeEventDTO.t,
-      userTimestamps: changeEventDTO.u
+      userTimestamps: changeEventDTO.u,
+      startPosition: changeEventDTO.s
     };
     return changeEvent;
   }
@@ -639,7 +667,6 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
 import CursorChangeReason = monaco.editor.CursorChangeReason;
 type TextRange = monaco.IRange;
 type Editor = monaco.editor.ICodeEditor;
-type EditorModel = monaco.editor.ITextModel;
 type Change =  monaco.editor.ISingleEditOperation;
 type ChangeEvent = Array<Change>; // Multiple locations can be changed at once
 type EditorOptions = monaco.editor.IStandaloneEditorConstructionOptions;
@@ -663,6 +690,7 @@ export interface AppliedEdit {
   colNumber: number;
   lineDelta: number;
   colDelta: number;
+  startPosition: monaco.Position;
 }
 
 export interface RemoteUserData {
@@ -679,4 +707,5 @@ export interface TimedChangeEvent {
   changes: ChangeEvent;
   timestamp: number;
   userTimestamps?: any;
+  startPosition: monaco.Position;
 }
