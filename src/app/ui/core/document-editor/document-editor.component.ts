@@ -44,8 +44,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     fixedOverflowWidgets: true,
     glyphMargin: true
   };
-  timeLastSaved: string = '';
-  statusMessage?: string;
+  datetimeLastSaved?: Date;
+  timeLastSaved?: string;
+  remoteStatusMessage?: string;
   connectionLoading: boolean = true;
   private userTimestamps: UserSyncMap = {};
   private currentlyEditing: boolean = false;
@@ -67,7 +68,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private newColorIndex = 0;
   private remoteUsers = new Map<string, RemoteUserData>();
   private cursorMonitor: any;
-  private startPositions = new Map<string, monaco.Position>();
+  private startPositions = new Map<string, Position>();
+  private unlockMonitor: any;
 
   constructor(
     private service: DocumentService,
@@ -112,19 +114,19 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         this.setCollaboratorsMessage();
         if (this.connectionLoading) { // TODO: handle case when someone is typing while user connects
           this.connectionLoading = false
-          this.setReadOnly(false);
+          this.restartInitialUnlocking(3500);
           this.forwardCursorSelections(this.editor?.getSelections());
         }
       }),
       this.editingStatus$.pipe(
-        filter(() => !(this.readOnly || this.connectionLoading)),
+        filter(() => !this.readOnly),
       ).subscribe(
         (isEditing: boolean) => {
           this.notifier.editing(isEditing);
         }
       ),
       this.selections$.pipe(
-        filter(() => !(this.readOnly || this.connectionLoading)),
+        filter(() => !this.connectionLoading),
         auditTime(1000) // Not essential, don't send updates frequently
       ).subscribe(
         (selections) => {
@@ -132,7 +134,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         }
       ),
       this.editsSubject$.pipe(
-        filter(() => !(this.readOnly || this.connectionLoading)),
+        filter(() => !this.readOnly),
         auditTime(600), // Send typing updates at most every 600ms
       ).subscribe(
         (edits: DocumentEdits) => {
@@ -145,12 +147,20 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
           if (event.action === 'DOCUMENT.CURSOR') { 
             this.updateRemotePositions(event.actor, event.model);
           } else if (event.action === 'DOCUMENT.SAVED') { 
-            this.timeLastSaved = event.model.whenSaved;
-            // Syncrhonize entire document from server copy when needed & available
-            if (this.statusMessage == '' && (this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
-              this.markdown = event.model.text; // TODO: make more efficient - only send whole document when needed (first use checksum, version id, timestamp, etc)
-              this.dirty = false;
-              this.render();
+            var datetime = new Date(event.model.whenSaved);
+            var timestamp = event.model.timestamp;
+            // If incoming saved copy is newest version so far
+            if (!this.datetimeLastSaved || (this.datetimeLastSaved <= datetime && this.timeLastSaved < timestamp)) {
+              this.datetimeLastSaved = datetime;
+              this.timeLastSaved = timestamp;
+              // Syncrhonize entire document from server copy when needed & available
+              if (this.remoteStatusMessage == '' && (this.readOnly ||
+                  (this.markdown.length != event.model.text.length || this.markdown != event.model.text))) {
+                this.markdown = event.model.text; // TODO: make more efficient - only send whole document when needed (first use checksum, version id, timestamp, etc)
+                this.dirty = false;
+                this.render();
+                this.restartInitialUnlocking(3500);
+              }
             }
           } else if (event.action === 'DOCUMENT.UPDATED') {
             const model: DocumentEdits = this.mapFromDocumentEditsDTO(event.model);
@@ -159,6 +169,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
             this.applyRemoteEdits(model, shortActorId);
             this.render();
             this.userTimestamps[shortActorId] = model.timestamp;
+            if (this.readOnly)
+              this.restartInitialUnlocking(5000);
           }
         }
       ),
@@ -247,8 +259,16 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.router.navigate([`/topo/`] );
   }
 
-  docCurrentlyEdited() {
-    return !this.connectionLoading && (this.readOnly || this.currentlyEditing);
+  getSavedStatusMessage() {
+    if (this.connectionLoading || this.readOnly)
+      return "Loading...";
+    else if (this.remoteStatusMessage.length > 0)
+      return "Saving..."
+    else if (this.datetimeLastSaved)
+      return "Saved " + this.datetimeLastSaved.toLocaleString('en-us', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit'});
+    else 
+      return "";
+    
   }
 
   getUserColorClass(actor: Actor) {
@@ -330,7 +350,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   /* For simple edits and selections, don't let remote users move cursor when at same position */
-  private shouldPreserveCursor(changes: ChangeEvent, position: monaco.Position) {
+  private shouldPreserveCursor(changes: ChangeEvent, position: Position) {
     var selections = this.editor.getSelections();
     return (changes.length == 1 && selections.length == 1 &&
         selections[0].startLineNumber == selections[0].endLineNumber &&
@@ -418,26 +438,39 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     return recentTransformations;
   }
 
-  // TODO: Finish this to find positions better 
+  /* Find and store start position of a series of edits. Start poition means
+    the point where the first edit began in a group or nearby edits by one user. */
   private getStartPosition(changes: ChangeEvent) {
     var change = changes[0];
-    var length = change.range.startLineNumber == change.range.endLineNumber ? change.text.length : 0;
+    // var length = change.range.startLineNumber == change.range.endLineNumber ? change.text.length : 0;
+    var lines = change.text.split(this.editorEol);
+    var newLinesAdded = lines.length - 1;
+    var newColsAdded = lines[lines.length - 1].length;
     var line = change.range.startLineNumber;
     var col = change.range.startColumn;
-    var before = `${line},${col-1}`;
-    if (this.startPositions.has(before))
-      var result = this.startPositions.get(before);
-    else
+    var positionKey = `${line},${col}`;
+    if (this.startPositions.has(positionKey)) {
+      var result = this.startPositions.get(positionKey);
+    } else {
       var result = new monaco.Position(line, col);
-    this.startPositions.set(`${line},${col}`, result);
-    if (length != 0)
-      this.startPositions.set(`${line},${col+length}`, result);
+      this.startPositions.set(`${line},${col}`, result);
+    }
+    if (change.text.length > 0)
+      this.startPositions.set(`${line+newLinesAdded},${col+newColsAdded}`, result);
     return result;
-
   }
 
   private shortenId(id: string) {
     return id.substr(0, 8);
+  }
+
+  private restartInitialUnlocking(delay: number) {
+    if (!this.readOnly)
+      return;
+    clearTimeout(this.unlockMonitor);
+    this.unlockMonitor = setTimeout(() => {
+      this.setReadOnly(false);
+    }, delay);
   }
 
   private saveEditorViewState() {
@@ -500,9 +533,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     }
     if (allEditors.length != 0) {
       message = allEditors.join(' & ')
-      this.statusMessage = `${message} ${verb} editing...`
+      this.remoteStatusMessage = `${message} ${verb} editing...`
     } else {
-      this.statusMessage = '';
+      this.remoteStatusMessage = '';
     }
   }
 
@@ -609,7 +642,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       c: changesDTO,
       t: changeEvent.timestamp,
       u: changeEvent.userTimestamps,
-      s: changeEvent.startPosition // TODO: shorten this
+      s: { l: changeEvent.startPosition.lineNumber, c: changeEvent.startPosition.column }
     };
     return ChangeEventDTO;
   }
@@ -647,7 +680,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       changes: changes,
       timestamp: changeEventDTO.t,
       userTimestamps: changeEventDTO.u,
-      startPosition: changeEventDTO.s
+      startPosition: new Position(changeEventDTO.s.l, changeEventDTO.s.c)
     };
     return changeEvent;
   }
@@ -665,6 +698,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
 
 // Monaco Type Aliases 
 import CursorChangeReason = monaco.editor.CursorChangeReason;
+import Position = monaco.Position;
 type TextRange = monaco.IRange;
 type Editor = monaco.editor.ICodeEditor;
 type Change =  monaco.editor.ISingleEditOperation;
@@ -690,7 +724,7 @@ export interface AppliedEdit {
   colNumber: number;
   lineDelta: number;
   colDelta: number;
-  startPosition: monaco.Position;
+  startPosition: Position;
 }
 
 export interface RemoteUserData {
@@ -707,5 +741,5 @@ export interface TimedChangeEvent {
   changes: ChangeEvent;
   timestamp: number;
   userTimestamps?: any;
-  startPosition: monaco.Position;
+  startPosition: Position;
 }

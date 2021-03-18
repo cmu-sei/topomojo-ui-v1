@@ -3,10 +3,11 @@
 
 <div  class="document-status">
   <div class="message-div">
-    <p>{{ statusMessage }}</p>
+    <p>{{ remoteStatusMessage }}</p>
   </div>
   <div class="saved-div">
-    <p>{{ docCurrentlyEdited() ? "Saving..." : timeLastSaved ? "Saved " + (timeLastSaved | shortdate) : '' }}</p>
+    <p>{{ getSavedStatusMessage() }}</p>
+    
   </div>
   <div *ngIf="key" class="presence-div">
     <span *ngFor="let actor of actors" class="label label-default {{getUserColorClass(actor)}}">
