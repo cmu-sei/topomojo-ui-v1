@@ -100,10 +100,10 @@ $alt: cmu-dark-theme($primary, $accent, mat-palette($mat-amber));
   opacity: 0.3; 
 }
 .editor-top { 
-    min-width: 6px;
-    max-height: 6px; 
-    top: -3px;
-    margin-left: -3px;
+  min-width: 6px;
+  max-height: 6px; 
+  top: -3px;
+  margin-left: -3px;
 }
 .editor-cursor-between { margin-left: -1px; }
 .editor-green { background: rgb(31, 161, 93); }
@@ -120,5 +120,8 @@ $alt: cmu-dark-theme($primary, $accent, mat-palette($mat-amber));
 .editor-pride-red { background: rgb(219, 68, 55); }
 .editor-pride-orange { background: rgb(255, 87, 34); }
 .editor-teal { background: rgb(93, 175, 221); }
-.editor-online { color: white }
-.editor-offline { color: black }
+.editor-online { color: white; }
+.editor-offline { 
+  color: black;
+  opacity: 0.6;
+}
