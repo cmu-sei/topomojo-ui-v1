@@ -93,3 +93,35 @@ $alt: cmu-dark-theme($primary, $accent, mat-palette($mat-amber));
 .mat-tooltip {
   color: black!important;
 }
+
+.editor-cursor { min-width: 2px; }
+.editor-selection { 
+  min-width: 8px; 
+  opacity: 0.3; 
+}
+.editor-top { 
+  min-width: 6px;
+  max-height: 6px; 
+  top: -3px;
+  margin-left: -3px;
+}
+.editor-cursor-between { margin-left: -1px; }
+.editor-green { background: rgb(31, 161, 93); }
+.editor-purple { background: rgb(161, 60, 180); }
+.editor-pride-yellow { background: rgb(239, 176, 0); }
+.editor-magenta { background: rgb(255, 0, 122); }
+.editor-sienna { background: rgb(253, 87, 61); }
+.editor-darkolive { background: rgb(99, 120, 47); }
+.editor-cyan { background: rgb(0, 163, 187); }
+.editor-red { background: rgb(255, 0, 26); }
+.editor-brown { background: rgb(166, 50, 50); }
+.editor-seagreen { background: rgb(27, 136, 122); }
+.editor-pink { background: rgb(241, 118, 167); }
+.editor-pride-red { background: rgb(219, 68, 55); }
+.editor-pride-orange { background: rgb(255, 87, 34); }
+.editor-teal { background: rgb(93, 175, 221); }
+.editor-online { color: white; }
+.editor-offline { 
+  color: black;
+  opacity: 0.6;
+}

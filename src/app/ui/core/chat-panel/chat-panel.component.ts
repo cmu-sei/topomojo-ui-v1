@@ -48,7 +48,7 @@ export class ChatPanelComponent implements OnInit, OnDestroy, AfterViewChecked {
 
       this.notifier.actors$.subscribe(actors => {
         this.actors = actors;
-        this.typers = this.actors.filter((a) => a.typing).map((a) => a.name).join();
+        this.typers = this.actors.filter((a) => a.typing).map((a) => a.name ?? 'Anonymous').join();
       }),
 
       this.notifier.chatEvents.subscribe(
