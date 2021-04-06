@@ -67,6 +67,7 @@ import { DocumentImageManagerComponent } from './document-image-manager/document
 import { SharedModule } from '../shared/shared.module';
 import { OidcCallbackComponent } from './oidc-callback/oidc-callback.component';
 import { ChallengeEditorComponent } from './challenge-editor/challenge-editor.component';
+import { MonacoEditorModule } from 'ngx-monaco-editor';
 
 const mats = [
   MatFormFieldModule,
@@ -96,6 +97,7 @@ const mats = [
     FormsModule,
     LayoutModule,
     ...mats,
+    MonacoEditorModule.forRoot(),
     RouterModule.forChild([
       { path: 'login', component: LoginComponent },
       { path: 'logout', component: LogoutComponent },

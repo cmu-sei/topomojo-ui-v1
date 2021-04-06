@@ -2,30 +2,42 @@
   Provide questions in yaml array format; fields <em>text, hint, answer, weight, grader</em>.
 </p>
 
-<pre>
-  questions:
-  - text: Who's on first?
-    answer: Yes
-    grader: match | matchAny | matchAll
-  </pre>
+  <ngx-monaco-editor
+    matInput 
+    id="sample-editor"
+    [options]="sampleOptions" 
+    [(ngModel)]="sampleText">
+  </ngx-monaco-editor>
 
 <p>
   Random macro form: <em>##target:type:range##</em> where <em>type: int, hex, b64, uid, list</em>.
 </p>
 
-<pre>
-##target:type:range##
-##key:hex:8##
-##key:b64:24##
-##key:uid:0##
-##key:int:99-9999##
-##key:list## one two three
-</pre>
+<ngx-monaco-editor
+    matInput 
+    id="macro-editor"
+    [options]="macroOptions" 
+    [(ngModel)]="macroText">
+  </ngx-monaco-editor>
 
+<p>
+  Custom challenge questions
+</p>
 <div class="form-group">
-  <textarea matInput type="textarea" rows="10" [(ngModel)]="text" placeholder="yaml question array"></textarea>
-  <small>yaml array of questions</small>
+  <ngx-monaco-editor
+    matInput 
+    id="yaml-editor"
+    [options]="editorOptions" 
+    [(ngModel)]="yamlText"
+    [ngModelOptions]="{standalone: true}"
+    (keyup)="editorUpdated()">
+  </ngx-monaco-editor>
+  <div id="yaml-hints">
+    <mat-hint>array of questions in yaml</mat-hint>
+    <mat-hint class="hint-end" [style.color]="codeLimit() && 'red'">{{(''+yamlText).length}} / 4096</mat-hint>
+  </div>
 </div>
-
-<button mat-raised-button color="primary" type="submit" (click)="save()">Save</button>
+<div class="submit">
+  <button mat-raised-button color="primary" type="submit" (click)="save()" [disabled]="!needSaving()">Save Questions</button>
+</div>
 <topomojo-error-div [errors]="errors"></topomojo-error-div>
