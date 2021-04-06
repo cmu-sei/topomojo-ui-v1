@@ -148,9 +148,9 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       ),
       this.notifier.documentEvents.subscribe(
         (event: HubEvent) => {
-          if (event.action === 'DOCUMENT.CURSOR') { 
+          if (event.action === 'DOCUMENT.CURSOR') {
             this.updateRemotePositions(event.actor, event.model);
-          } else if (event.action === 'DOCUMENT.SAVED') { 
+          } else if (event.action === 'DOCUMENT.SAVED') {
             var datetime = new Date(event.model.whenSaved);
             var timestamp = event.model.timestamp;
             // If incoming saved copy is newest version so far
@@ -161,7 +161,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
               if (this.remoteStatusMessage == '' && (this.readOnly ||
                   this.markdown.length != event.model.text.length || this.markdown != event.model.text)) {
                 // TODO: Make more efficient? Only send whole document when needed (checksum, version id, timestamp, etc)
-                this.markdown = event.model.text; 
+                this.markdown = event.model.text;
                 this.dirty = false;
                 this.render();
                 this.restartInitialUnlocking(4000);
@@ -235,7 +235,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   save() {
-    if (this.dirty) { 
+    if (this.dirty) {
       this.service.updateDocument(this.id, this.markdown)
         .subscribe(() => { this.dirty = false; });
     }
@@ -275,7 +275,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       return 'Saving...'
     else if (this.datetimeLastSaved)
       return 'Saved ' + this.datetimeLastSaved.toLocaleString('en-us', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit', second: '2-digit'});
-    else 
+    else
       return '';
   }
 
@@ -286,7 +286,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     } else {
       return actor.online ? 'online' : '';
     }
-  } 
+  }
 
   onInitEditor(editor) {
     this.editor = editor;
@@ -315,7 +315,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         return;
       this.forwardContentChange(event);
     });
-    // Keep track of focus status to reset properly 
+    // Keep track of focus status to reset properly
     this.editor.onDidFocusEditorWidget(() => this.editorFocused = true );
     this.editor.onDidBlurEditorWidget(() => this.editorFocused = false );
   }
@@ -350,7 +350,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       var position = this.editor.getPosition();
       var shouldPreserveCursor = this.shouldPreserveCursor(transformedChanges, position);
       // TODO: can use returned undo operations to store/modify so undo stack works with remote editors
-      this.editor.getModel().applyEdits(transformedChanges); 
+      this.editor.getModel().applyEdits(transformedChanges);
       allTransformedChanges.push({
         changes: transformedChanges,
         timestamp: changeEvent.timestamp,
@@ -373,7 +373,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         changes[0].range.startLineNumber == position.lineNumber &&
         changes[0].range.startColumn == position.column);
   }
-  
+
   /* Store any applied edits as a log to apply transformations on future incoming operations */
   private storeTransformationLog(edits: Array<TimedChangeEvent>, uid: string, beginTime: number) {
     var newLog = this.pruneTransformations();
@@ -402,7 +402,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
     this.appliedEditsLog = newLog;
   }
 
-  /* Go through all applied edits, filtering by user and timestamp, and transform 
+  /* Go through all applied edits, filtering by user and timestamp, and transform
     the range/position of incoming changes with calculated offsets */
   private applyTransformations(incomingChangeEvent: TimedChangeEvent, uid: string, incomingBeginTime: number, tracker: any) {
     var result: ChangeEvent = [];
@@ -414,8 +414,8 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         var appliedEdit = this.appliedEditsLog[i];
         var appliedBeginPosition = appliedEdit.beginPosition ?? appliedEdit.range.getStartPosition();
         var lastHeardFromUser = incomingChangeEvent.userTimestamps[appliedEdit.uid] ?? 0;
-        // Transform if previous edit not from same user & happened after last received update from that user 
-        if (appliedEdit.uid != uid && appliedEdit.timestamp > lastHeardFromUser) { 
+        // Transform if previous edit not from same user & happened after last received update from that user
+        if (appliedEdit.uid != uid && appliedEdit.timestamp > lastHeardFromUser) {
           if (!tracker.set) {
             tracker.set = true;
             tracker.start = i; // optimization to avoid repeatedly looping through same old/irrelevant logged edits
@@ -431,7 +431,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
               var colDelta = appliedEdit.bottomLineLength - colsReplaced;
               incomingRange = this.shiftRange(incomingRange, appliedEdit.lineDelta, colDelta);
             // Case 3: normal line add/remove *not* affecting same line as incoming change
-            } else if (appliedEdit.range.getStartPosition().isBeforeOrEqual(incomingRange.getStartPosition())) { 
+            } else if (appliedEdit.range.getStartPosition().isBeforeOrEqual(incomingRange.getStartPosition())) {
               incomingRange = this.shiftRange(incomingRange, appliedEdit.lineDelta, 0);
             }
           } else if (appliedEdit.range.startLineNumber == incomingRange.startLineNumber) { // Same line, but not multi-line
@@ -442,7 +442,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
               incomingRange = this.shiftRange(incomingRange, 0, colDelta);
             }
           }
-          // TODO: When ranges intersecting: unpredictable, more complicated conflicts need resolving 
+          // TODO: When ranges intersecting: unpredictable, more complicated conflicts need resolving
           // if (Range.areIntersecting(appliedEdit.range, incomingRange)) { }
           // if (Range.strictContainsRange(appliedEdit.range, incomingRange)) { }
         }
@@ -489,7 +489,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       index--;
     }
     if (index == editsLog.length - 1)
-      editsLog.push(...newEdits); 
+      editsLog.push(...newEdits);
     else if (index == -1)
       editsLog.unshift(...newEdits);
     else
@@ -514,14 +514,14 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   private saveEditorViewState() {
     this.editorViewState = this.editor?.saveViewState();
   }
-  
+
   private restoreEditorViewState() {
     this.editor?.restoreViewState(this.editorViewState);
     if (this.editorFocused)
       this.editor?.focus();
     this.tooltipMessage = this.editor.getContribution('editor.contrib.messageController');
   }
-  
+
   private editorViewChanged(reason?: CursorChangeReason) {
     if (reason && reason == CursorChangeReason.ContentFlush)
       this.restoreEditorViewState();
@@ -635,7 +635,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         var cursorRange = Range.fromPositions(cursorPosition, cursorPosition);
         var cursorColor = `editor-${user.color}`;
         var cursorBetween = cursorPosition.column == 1 ? '' : 'editor-cursor-between';
-        
+
         if (isSelection) { // Selection decoration
           newDecorations.push({
             range: remoteRange,
@@ -704,7 +704,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
   }
 
   private mapToRangeDTO(range: IRange) {
-    return { 
+    return {
       sL: range.startLineNumber, sC: range.startColumn,
       eL: range.endLineNumber, eC: range.endColumn
     };
@@ -726,7 +726,7 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
       beginTime: editsDTO.b
     };
   }
-  
+
   private mapFromChangeEventDTO(changeEventDTO: any): TimedChangeEvent {
     var changes: ChangeEvent = changeEventDTO.c.map(change => {
       return { range: this.mapFromRangeDTO(change.r), text: change.t }
@@ -748,10 +748,10 @@ export class DocumentEditorComponent implements OnInit, OnDestroy {
         return new Position(position.l, position.c);
     })
   }
-  
+
 }
 
-// Monaco Type and Class Aliases 
+// Monaco Type and Class Aliases
 import CursorChangeReason = monaco.editor.CursorChangeReason;
 import Position = monaco.Position;
 import Range = monaco.Range;
@@ -764,7 +764,7 @@ type EditorViewState = monaco.editor.ICodeEditorViewState;
 
 export interface DocumentEdits {
   editsQueue: Array<TimedChangeEvent>; // Queued edits to send
-  timestamp: number; 
+  timestamp: number;
   beginTime: number;
 }
 

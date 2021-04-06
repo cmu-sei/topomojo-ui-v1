@@ -7,7 +7,7 @@
   </div>
   <div class="saved-div">
     <p>{{ getSavedStatusMessage() }}</p>
-    
+
   </div>
   <div *ngIf="key" class="presence-div">
     <span *ngFor="let actor of actors" class="label label-default {{getUserColorClass(actor)}}">
@@ -23,9 +23,10 @@
   <mat-drawer class="editor" position="start" mode="side" opened="true" disableClose="true">
     <ngx-monaco-editor
       id="markdown-editor"
-      [options]="editorOptions" 
+      [options]="editorOptions"
       [(ngModel)]="markdown"
       (onInit)="onInitEditor($event)">
+      (keyup)="reRender()">
     </ngx-monaco-editor>
   </mat-drawer>
 
