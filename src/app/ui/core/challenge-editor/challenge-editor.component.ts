@@ -32,12 +32,12 @@ export class ChallengeEditorComponent implements OnInit {
   };
   sampleOptions = this.editorOptions;
   macroOptions = this.sampleOptions;
-  sampleText = 
+  sampleText =
 `questions:
   - text: Who's on first?
     answer: Yes
     grader: match | matchAny | matchAll`;
-  macroText = 
+  macroText =
 `##target:type:range##
 ##key:hex:8##
 ##key:b64:24##
@@ -52,13 +52,19 @@ export class ChallengeEditorComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.yamlText = YAML.stringify(JSON.parse(this.workspace.challenge || '{"questions":[]}'));
+    YAML.scalarOptions.str.fold.lineWidth = 0;
+
+    this.yamlText = YAML.stringify(
+      JSON.parse(this.workspace.challenge || '{"questions":[]}')
+    );
+
     this.toolbar.theme$.subscribe(
       (theme: boolean) => {
         this.codeTheme = theme ? 'vs-dark' : 'vs-light';
         this.updateEditorOptions();
       }
     );
+
     this.configureEditorOptions();
   }
 
@@ -74,7 +80,7 @@ export class ChallengeEditorComponent implements OnInit {
           this.editorDirty = false;
           this.errors = [];
         },
-        (error) => { 
+        (error) => {
           this.errors.push({message: "Error while saving"});
         }
       );
@@ -82,7 +88,7 @@ export class ChallengeEditorComponent implements OnInit {
       this.errors.push(ex);
     }
   }
-  
+
   updateEditorOptions(): void {
     this.editorOptions = { ...this.editorOptions, theme: this.codeTheme };
   }
