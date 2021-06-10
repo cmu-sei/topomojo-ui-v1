@@ -7,6 +7,7 @@ import { HttpClient } from '@angular/common/http';
 import { UserManagerSettings } from 'oidc-client';
 import { catchError } from 'rxjs/operators';
 import { ShowdownOptions } from 'showdown';
+import { PlatformLocation } from '@angular/common';
 
 export class Layout {
     embedded: boolean;
@@ -32,23 +33,23 @@ export class SettingsService {
         }
     };
     localSettings: LocalAppSettings = {};
-
-    constructor(
-        private http: HttpClient
-    ) {
-        this.hostUrl = window.location.origin;
-        this.localSettings = this.getLocal();
-    }
-
-
-
     url = 'assets/config/settings.json';
-    hostUrl: string;
-
-    layout: Layout = new Layout();
+    basehref = '';
+    absoluteUrl = '';
+    hostUrl = '';
     private _layout: Subject<Layout> = new Subject<Layout>();
+    layout: Layout = new Layout();
     layout$: Observable<Layout> = this._layout.asObservable();
 
+    constructor(
+      private http: HttpClient,
+      platform: PlatformLocation
+    ) {
+      this.basehref = platform.getBaseHrefFromDOM();
+      this.absoluteUrl = `${window.location.protocol}//${window.location.host}${this.basehref}`;
+      this.hostUrl = window.location.origin;
+      this.localSettings = this.getLocal();
+    }
 
     changeLayout(layout: Layout): void {
         this.layout = layout;

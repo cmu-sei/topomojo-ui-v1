@@ -19,7 +19,7 @@ export class GamespaceService extends GeneratedGamespaceService {
     ) { super(http, api); }
 
     public openConsole(id, name) {
-        this.settingsSvc.showTab('/console/' + id + '/' + name.match(/[^#]*/)[0]);
+      this.settingsSvc.showTab(`${this.settingsSvc.basehref}console/${id}/${name.match(/[^#]*/)[0]}`);
     }
 
     public getText(url: string): Observable<string> {

@@ -19,6 +19,6 @@ export class VmService extends GeneratedVmService {
     ) { super(http, api); }
 
     public openConsole(id, name) {
-        this.settingSvc.showTab('/console/' + id + '/' + name.match(/[^#]*/)[0]);
+        this.settingSvc.showTab(`${this.settingSvc.basehref}console/${id}/${name.match(/[^#]*/)[0]}`);
     }
 }
